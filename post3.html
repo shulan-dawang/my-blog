@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java 的继承与接口 — Java 学习笔记</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #2c2c2c;
+      --muted: #888;
+      --accent: #b14623;
+      --border: #e8e8e8;
+      --code-bg: #f6f6f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    header {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header h1 a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+
+    article h1 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    article .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+    }
+
+    article h2 {
+      font-size: 1.2rem;
+      margin: 36px 0 10px;
+      color: var(--accent);
+    }
+
+    article p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    article ul, article ol {
+      margin-bottom: 14px;
+      padding-left: 22px;
+    }
+
+    article li { margin-bottom: 4px; }
+
+    article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    article code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
+        "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    article p code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 32px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 16px 48px; }
+      header { padding: 28px 0 20px; margin-bottom: 24px; }
+      header h1 { font-size: 1.5rem; }
+      article h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><a href="index.html">Java 学习笔记</a></h1>
+  <p>记录每一段成长 · 从 Hello World 开始</p>
+</header>
+
+<main>
+  <article>
+    <h1>Java 的继承与接口</h1>
+    <p class="meta">2026 年 5 月 11 日</p>
+
+    <!-- ==================== 第一部分：继承 ==================== -->
+
+    <h2>什么是继承？</h2>
+    <p>
+      继承（<strong>Inheritance</strong>）是面向对象编程的三大特性之一。
+      它允许一个类<strong>复用</strong>另一个类的属性和方法，从而避免重复代码，建立类之间的层次关系。
+    </p>
+    <p>
+      在 Java 中，被继承的类称为<strong>父类</strong>（Super Class / Parent Class），
+      继承别人的类称为<strong>子类</strong>（Sub Class / Child Class）。
+      子类自动拥有父类所有的非私有成员，还可以添加自己独有的属性和方法。
+    </p>
+    <p>打个比方：<strong>父类</strong>是「动物」——有名字、年龄，能吃东西、睡觉；<strong>子类</strong>是「狗」——在动物的基础上，还多了摇尾巴、汪汪叫。</p>
+
+    <h2>extends 关键字</h2>
+    <p>使用 <code>extends</code> 关键字让一个类继承另一个类：</p>
+    <pre><code>// 父类
+public class Animal {
+    String name;
+    int age;
+
+    public void eat() {
+        System.out.println(name + " 正在吃东西");
+    }
+
+    public void sleep() {
+        System.out.println(name + " 正在睡觉");
+    }
+}
+
+// 子类
+public class Dog extends Animal {
+    public void bark() {
+        System.out.println(name + " 汪汪叫！");
+    }
+}</code></pre>
+    <p><code>Dog</code> 虽然没有定义 <code>name</code>、<code>age</code>、<code>eat()</code>、<code>sleep()</code>，但通过继承，它自动拥有了这一切：</p>
+    <pre><code>Dog d = new Dog();
+d.name = "旺财";
+d.age = 3;
+d.eat();   // 旺财 正在吃东西
+d.sleep(); // 旺财 正在睡觉
+d.bark();  // 旺财 汪汪叫！</code></pre>
+
+    <h2>Java 是单继承</h2>
+    <p>Java 规定一个类只能有<strong>一个</strong>直接父类。下面的写法是<strong>错误的</strong>：</p>
+    <pre><code>// 错误！Java 不支持多继承
+public class Dog extends Animal, Pet { }  // 编译报错</code></pre>
+    <p>
+      原因是为了避免<strong>菱形问题</strong>（Diamond Problem）：如果多个父类有同名方法，编译器不知道该用哪一个。
+      C++ 允许多继承，但 Java 选择了更安全的单继承 + 接口方案。
+    </p>
+
+    <h2>super 关键字</h2>
+    <p>
+      <code>super</code> 代表父类对象的引用，主要有两种用法：调用父类构造方法和调用父类成员。
+    </p>
+
+    <h2>① 调用父类构造方法</h2>
+    <p>子类构造方法的第一行必须调用父类构造方法（不写的话编译器默认加 <code>super()</code>）：</p>
+    <pre><code>public class Animal {
+    String name;
+
+    public Animal(String name) {
+        this.name = name;
+    }
+}
+
+public class Dog extends Animal {
+    String breed;  // 品种
+
+    public Dog(String name, String breed) {
+        super(name);      // 调用父类构造方法，必须放在第一行
+        this.breed = breed;
+    }
+}</code></pre>
+    <p>
+      注意：如果父类<strong>没有无参构造方法</strong>，子类必须用 <code>super(参数)</code> 显式调用父类的有参构造，
+      否则编译报错。
+    </p>
+
+    <h2>② 调用父类成员</h2>
+    <p>当子类定义了和父类同名的成员时，用 <code>super</code> 区分：</p>
+    <pre><code>public class Animal {
+    public void speak() {
+        System.out.println("动物在叫");
+    }
+}
+
+public class Cat extends Animal {
+    @Override
+    public void speak() {
+        super.speak();              // 先执行父类版本
+        System.out.println("喵喵喵"); // 再加上自己的逻辑
+    }
+}</code></pre>
+
+    <h2>方法重写（Override）</h2>
+    <p>
+      子类可以<strong>重写</strong>父类的方法——方法名、参数列表、返回类型完全相同，但方法体不同。
+      重写让子类表现出自己的行为，这是<strong>多态</strong>的基础。
+    </p>
+    <p>重写规则：</p>
+    <ul>
+      <li>方法签名（名称 + 参数）必须完全一致。</li>
+      <li>返回类型可以是父类方法返回类型的子类（协变返回类型）。</li>
+      <li>访问权限不能比父类更严格（父类 <code>public</code>，子类不能是 <code>private</code>）。</li>
+      <li>使用 <code>@Override</code> 注解让编译器帮你检查是否正确重写。</li>
+    </ul>
+    <pre><code>public class Animal {
+    public void move() {
+        System.out.println("动物在移动");
+    }
+}
+
+public class Bird extends Animal {
+    @Override
+    public void move() {
+        System.out.println("鸟儿在飞翔");  // 重写为飞翔
+    }
+}</code></pre>
+
+    <h2>方法重载 vs 方法重写</h2>
+    <p>这两个概念容易混淆，对比一下：</p>
+    <ul>
+      <li><strong>重载（Overload）</strong>：同一个类中，方法名相同、<strong>参数不同</strong>。编译时决定调用哪个。</li>
+      <li><strong>重写（Override）</strong>：父子类之间，方法签名<strong>完全相同</strong>。运行时决定调用哪个（多态）。</li>
+    </ul>
+
+    <h2>Object 类 — 所有类的祖先</h2>
+    <p>
+      Java 中所有类都直接或间接继承自 <code>java.lang.Object</code>。
+      即使你不写 <code>extends</code>，编译器也会自动加上 <code>extends Object</code>。
+    </p>
+    <p><code>Object</code> 提供了几个常用方法，子类通常会重写：</p>
+    <pre><code>public class Person {
+    String name;
+    int age;
+
+    @Override
+    public String toString() {
+        return "Person{name='" + name + "', age=" + age + "}";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Person p = (Person) obj;
+        return age == p.age && Objects.equals(name, p.name);
+    }
+}</code></pre>
+
+    <!-- ==================== 第二部分：接口 ==================== -->
+
+    <h2>什么是接口？</h2>
+    <p>
+      接口（<strong>Interface</strong>）是一种特殊的引用类型，它是<strong>行为的契约</strong>。
+      接口只规定"能做什么"，不规定"怎么做"——具体实现交给实现它的类。
+    </p>
+    <p>
+      打个比方：<strong>接口</strong>就像一份合同。合同上写了"乙方必须会编程"，但具体怎么写、用什么语言，由签合同的人自己决定。
+      Java、Python、C++ 程序员都可以签这份合同，各自用自己的方式实现"编程"。
+    </p>
+
+    <h2>interface 关键字</h2>
+    <p>定义接口使用 <code>interface</code> 关键字：</p>
+    <pre><code>public interface Flyable {
+    // 抽象方法（没有方法体）
+    void fly();
+
+    // 默认方法（Java 8+，有方法体）
+    default void prepare() {
+        System.out.println("准备起飞...");
+    }
+
+    // 静态方法（Java 8+）
+    static int maxSpeed() {
+        return 900;
+    }
+
+    // 常量（默认 public static final）
+    String TYPE = "飞行生物";
+}</code></pre>
+    <p>接口中的方法默认为 <code>public abstract</code>，变量默认为 <code>public static final</code>（常量）。</p>
+
+    <h2>implements 关键字</h2>
+    <p>类通过 <code>implements</code> 关键字实现接口，<strong>必须</strong>重写接口中的所有抽象方法：</p>
+    <pre><code>public class Bird implements Flyable {
+    @Override
+    public void fly() {
+        System.out.println("鸟儿扇动翅膀飞行");
+    }
+}
+
+public class Airplane implements Flyable {
+    @Override
+    public void fly() {
+        System.out.println("飞机靠引擎推力飞行");
+    }
+}</code></pre>
+    <p>同一个接口，不同类可以有不同的实现——这就是<strong>多态</strong>的体现。</p>
+
+    <h2>一个类可以实现多个接口</h2>
+    <p>Java 虽然不允许多继承类，但允许实现<strong>多个</strong>接口，用逗号隔开：</p>
+    <pre><code>public interface Swimmable {
+    void swim();
+}
+
+public interface Runnable {
+    void run();
+}
+
+// 实现多个接口
+public class Duck implements Flyable, Swimmable, Runnable {
+    @Override
+    public void fly() {
+        System.out.println("鸭子勉强能飞");
+    }
+
+    @Override
+    public void swim() {
+        System.out.println("鸭子擅长游泳");
+    }
+
+    @Override
+    public void run() {
+        System.out.println("鸭子摇摇摆摆地跑");
+    }
+}</code></pre>
+    <p>
+      这弥补了 Java 单继承的局限——类只能继承一个父类，但可以实现无数个接口。
+      所以常说：<strong>继承是"是什么"（is-a），接口是"能做什么"（can-do）</strong>。
+    </p>
+
+    <h2>接口可以继承接口</h2>
+    <p>接口之间也用 <code>extends</code> 继承，并且<strong>支持多继承</strong>：</p>
+    <pre><code>public interface Printable {
+    void print();
+}
+
+public interface Scannable {
+    void scan();
+}
+
+// 接口多继承
+public interface MultiFunction extends Printable, Scannable {
+    void fax();
+}
+
+// 实现类需要重写所有方法
+public class OfficeMachine implements MultiFunction {
+    @Override public void print() { System.out.println("打印中..."); }
+    @Override public void scan()  { System.out.println("扫描中..."); }
+    @Override public void fax()   { System.out.println("传真中..."); }
+}</code></pre>
+
+    <h2>接口 vs 抽象类</h2>
+    <p>这是面试高频问题，有必要搞清楚：</p>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+      <thead>
+        <tr style="background:var(--code-bg);">
+          <th style="border:1px solid var(--border); padding:8px 12px; text-align:left;">对比项</th>
+          <th style="border:1px solid var(--border); padding:8px 12px; text-align:left;">抽象类</th>
+          <th style="border:1px solid var(--border); padding:8px 12px; text-align:left;">接口</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border:1px solid var(--border); padding:8px 12px;">关键字</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;"><code>abstract class</code></td>
+          <td style="border:1px solid var(--border); padding:8px 12px;"><code>interface</code></td>
+        </tr>
+        <tr>
+          <td style="border:1px solid var(--border); padding:8px 12px;">构造方法</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">有</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">没有</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid var(--border); padding:8px 12px;">成员变量</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">可以是各种类型</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">只能 public static final 常量</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid var(--border); padding:8px 12px;">方法</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">可以有抽象方法和具体方法</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">抽象方法 + default/static 方法</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid var(--border); padding:8px 12px;">多继承</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">不支持</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">支持（接口可以继承多个接口）</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid var(--border); padding:8px 12px;">适用场景</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">有共同父类的"是什么"关系</td>
+          <td style="border:1px solid var(--border); padding:8px 12px;">跨不同类层次的"能做什么"能力</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>一句话口诀：<strong>共用属性写继承，共用行为写接口。</strong></p>
+
+    <h2>多态 — 继承与接口的共同目标</h2>
+    <p>
+      无论是继承还是接口，最终都在服务于<strong>多态</strong>（Polymorphism）——
+      同一个类型的引用可以指向不同子类 / 实现类的对象，调用方法时表现出不同行为。
+    </p>
+    <pre><code>// 继承的多态
+Animal a1 = new Dog();
+Animal a2 = new Cat();
+a1.speak();  // 狗叫
+a2.speak();  // 猫叫
+
+// 接口的多态
+Flyable f1 = new Bird();
+Flyable f2 = new Airplane();
+f1.fly();    // 鸟儿扇动翅膀飞行
+f2.fly();    // 飞机靠引擎推力飞行</code></pre>
+    <p>
+      这种写法的好处是<strong>面向抽象编程</strong>——代码依赖的是父类 / 接口类型，
+      而不是具体的子类。将来替换实现时，调用方的代码完全不用改。
+    </p>
+
+    <h2>小结</h2>
+    <p>今天我们学习了 Java 面向对象编程中最核心的两个机制：</p>
+    <ul>
+      <li><strong>继承（extends）</strong>：子类复用父类代码，形成 "is-a" 层次关系。Java 单继承，一个类只有一个爹。</li>
+      <li><strong>super</strong>：在子类中引用父类成员或调用父类构造方法。</li>
+      <li><strong>方法重写（Override）</strong>：子类用自己的方式实现父类方法。</li>
+      <li><strong>接口（interface / implements）</strong>：定义行为契约，一个类可以实现多个接口，弥补单继承的局限。</li>
+      <li><strong>多态</strong>：继承和接口共同支撑多态，让代码更灵活、更易扩展。</li>
+    </ul>
+    <p>
+      掌握继承和接口，是写出优雅 Java 代码的关键。
+      记住两条原则：<strong>继承看"是什么"（狗是动物），接口看"能做什么"（鸟能飞）</strong>。
+      下一课我们将深入探讨多态的底层原理。
+    </p>
+
+    <a href="index.html" class="back">&larr; 返回首页</a>
+  </article>
+</main>
+
+<footer>
+  用纸笔写代码，用耐心学 Java
+</footer>
+
+</body>
+</html>
