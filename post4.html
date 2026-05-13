@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>面向对象设计的基本原则 — Java 学习笔记</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #2c2c2c;
+      --muted: #888;
+      --accent: #b14623;
+      --border: #e8e8e8;
+      --code-bg: #f6f6f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    header {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header h1 a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+
+    article h1 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    article .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+    }
+
+    article h2 {
+      font-size: 1.2rem;
+      margin: 36px 0 10px;
+      color: var(--accent);
+    }
+
+    article p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    article ul, article ol {
+      margin-bottom: 14px;
+      padding-left: 22px;
+    }
+
+    article li { margin-bottom: 4px; }
+
+    article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    article code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
+        "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    article p code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 32px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 16px 48px; }
+      header { padding: 28px 0 20px; margin-bottom: 24px; }
+      header h1 { font-size: 1.5rem; }
+      article h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><a href="index.html">Java 学习笔记</a></h1>
+  <p>记录每一段成长 · 从 Hello World 开始</p>
+</header>
+
+<main>
+  <article>
+    <h1>面向对象设计的基本原则</h1>
+    <p class="meta">2026 年 5 月 13 日</p>
+
+    <p>
+      前面我们学习了类和对象、继承与接口，这些都是面向对象编程的<strong>工具</strong>。
+      但有了工具还不够——你还需要知道<strong>怎么用才漂亮</strong>。
+      这篇文章聊聊面向对象设计的五个核心原则，它们是写出可维护、可扩展代码的底层心法。
+    </p>
+
+    <!-- ==================== UML 类图简介 ==================== -->
+
+    <h2>UML 类图简介</h2>
+    <p>
+      在设计阶段，与其直接写代码，不如先画图。UML（Unified Modeling Language，统一建模语言）的类图
+      是最常用的设计表达工具。一张图胜过一百行注释。
+    </p>
+    <p>一个标准的 UML 类图通常包含三格：</p>
+    <ul>
+      <li><strong>第一格</strong>：类名（抽象类用<em>斜体</em>，接口用 &laquo;interface&raquo; 标注）</li>
+      <li><strong>第二格</strong>：属性（格式：<code>可见性 属性名: 类型</code>）</li>
+      <li><strong>第三格</strong>：方法（格式：<code>可见性 方法名(参数): 返回类型</code>）</li>
+    </ul>
+    <p>类与类之间的关系用不同的线条表示：</p>
+    <ul>
+      <li><strong>实线 + 空心三角</strong>：继承（extends），表示 "is-a" 关系。</li>
+      <li><strong>虚线 + 空心三角</strong>：实现接口（implements），表示 "can-do" 关系。</li>
+      <li><strong>实线 + 普通箭头</strong>：关联（Association），一个类持有另一个类的引用。</li>
+      <li><strong>实线 + 空心菱形</strong>：聚合（Aggregation），整体与部分的关系，部分可以独立存在（如汽车与轮胎）。</li>
+      <li><strong>实线 + 实心菱形</strong>：组合（Composition），更强的整体-部分关系，部分不能独立存在（如人和心脏）。</li>
+      <li><strong>虚线 + 普通箭头</strong>：依赖（Dependency），一个类的方法中临时使用了另一个类。</li>
+    </ul>
+    <p>
+      不用背，多看多画自然就记住了。关键是理解每种关系表达的<strong>耦合程度</strong>从强到弱：
+      继承 &gt; 实现 &gt; 组合 &gt; 聚合 &gt; 关联 &gt; 依赖。
+    </p>
+
+    <!-- ==================== 面向抽象原则 ==================== -->
+
+    <h2>面向抽象原则</h2>
+    <p>
+      面向抽象编程（Program to an Interface, not an Implementation）是面向对象设计的<strong>第一原则</strong>。
+      它的核心思想是：<strong>代码应该依赖抽象（接口或抽象类），而不是具体的实现类。</strong>
+    </p>
+    <p>先看一个<strong>反例</strong>——依赖具体类：</p>
+    <pre><code>public class Driver {
+    // 依赖具体的 Benz 类
+    public void drive(Benz benz) {
+        benz.start();
+        benz.run();
+    }
+}</code></pre>
+    <p>
+      问题很明显：如果换成 BMW 或者 Audi，<code>Driver</code> 类就得改。
+      违背了"对扩展开放，对修改关闭"的原则（后面会讲）。
+    </p>
+    <p>改成<strong>面向接口</strong>的写法：</p>
+    <pre><code>// 定义抽象
+public interface Car {
+    void start();
+    void run();
+}
+
+// 具体实现
+public class Benz implements Car {
+    @Override
+    public void start() { System.out.println("奔驰启动"); }
+    @Override
+    public void run()   { System.out.println("奔驰行驶"); }
+}
+
+public class BMW implements Car {
+    @Override
+    public void start() { System.out.println("宝马启动"); }
+    @Override
+    public void run()   { System.out.println("宝马行驶"); }
+}
+
+// Driver 只依赖接口，不依赖具体品牌
+public class Driver {
+    public void drive(Car car) {   // 参数是接口类型
+        car.start();
+        car.run();
+    }
+}</code></pre>
+    <p>
+      现在 <code>Driver</code> 可以开任何实现了 <code>Car</code> 接口的车——
+      新增奥迪、特斯拉都不用改 <code>Driver</code> 的代码。
+    </p>
+    <p>
+      这条原则在 Java 标准库中随处可见：比如 <code>List&lt;String&gt; list = new ArrayList&lt;&gt;()</code>，
+      左边写接口类型，右边写具体实现。将来换成 <code>LinkedList</code>，调用方代码一行不动。
+    </p>
+
+    <!-- ==================== "开-闭"原则 ==================== -->
+
+    <h2>"开-闭"原则（Open-Closed Principle）</h2>
+    <p>
+      "开-闭"原则是 Bertrand Meyer 在 1988 年提出的经典设计原则，也是 SOLID 中的 O。
+      一句话概括：<strong>对扩展开放，对修改关闭。</strong>
+    </p>
+    <p>
+      什么意思？当需求变化时，应该通过<strong>新增代码</strong>来扩展功能，
+      而不是修改已有的、已经测试通过的代码。修改老代码风险大——可能引入新 bug，牵一发而动全身。
+    </p>
+
+    <h2>一个违反开闭原则的案例</h2>
+    <p>假设有个图形绘制系统：</p>
+    <pre><code>public class GraphicEditor {
+    public void draw(String type) {
+        if (type.equals("circle")) {
+            System.out.println("画圆形");
+        } else if (type.equals("rectangle")) {
+            System.out.println("画矩形");
+        }
+        // 每加一种图形，就要改这个方法！
+    }
+}</code></pre>
+    <p>每次新增图形类型，都要修改 <code>draw</code> 方法——这是典型的"对修改开放"。</p>
+
+    <h2>用多态实现开闭原则</h2>
+    <p>重构后：</p>
+    <pre><code>public interface Shape {
+    void draw();
+}
+
+public class Circle implements Shape {
+    @Override
+    public void draw() { System.out.println("画圆形"); }
+}
+
+public class Rectangle implements Shape {
+    @Override
+    public void draw() { System.out.println("画矩形"); }
+}
+
+public class GraphicEditor {
+    public void draw(Shape shape) {  // 依赖抽象
+        shape.draw();                // 多态调用
+    }
+}</code></pre>
+    <p>现在要加三角形，只需新建一个 <code>Triangle</code> 类实现 <code>Shape</code> 接口——
+    不用动 <code>GraphicEditor</code> 一行代码。这就是<strong>对扩展开放，对修改关闭</strong>。</p>
+    <p>
+      总结：<strong>面向抽象原则</strong>是指导思想，<strong>开闭原则</strong>是衡量标准。
+      判断一段代码好不好，就问自己："加新功能时要不要改老代码？"
+    </p>
+
+    <!-- ==================== "多用组合，少用继承"原则 ==================== -->
+
+    <h2>"多用组合，少用继承"原则</h2>
+    <p>
+      这个原则出自《Design Patterns》（GoF），原文是：
+      <strong>"Favor composition over inheritance"（多用组合，少用继承）。</strong>
+      这是面向对象设计中最容易被误解的一条——继承不是不能用，而是<strong>不能滥用</strong>。
+    </p>
+
+    <h2>继承的问题</h2>
+    <p>继承看似方便（子类自动获得父类所有代码），但它有三大隐患：</p>
+    <ul>
+      <li><strong>破坏封装</strong>：子类依赖父类的内部实现细节，父类一改，子类可能全部崩溃。</li>
+      <li><strong>灵活性差</strong>：继承是静态关系，编译时绑定，运行时没法改变。狗一辈子是动物。</li>
+      <li><strong>层次膨胀</strong>：比如要一个"会飞的狗"和一个"会飞的猫"，用继承很难设计，容易搞出臃肿的类层次。</li>
+    </ul>
+
+    <h2>组合的优势</h2>
+    <p>
+      组合（Composition）是指一个类<strong>持有</strong>另一个类的引用，通过委托来复用代码：
+    </p>
+    <pre><code>// 用接口定义能力
+public interface FlyBehavior {
+    void fly();
+}
+
+public class FlyWithWings implements FlyBehavior {
+    @Override
+    public void fly() { System.out.println("扇动翅膀飞行"); }
+}
+
+public class CannotFly implements FlyBehavior {
+    @Override
+    public void fly() { System.out.println("不能飞"); }
+}
+
+// 通过组合赋予能力
+public class Dog {
+    private FlyBehavior flyBehavior;  // 组合——持有引用
+
+    public Dog(FlyBehavior fb) {
+        this.flyBehavior = fb;
+    }
+
+    public void performFly() {
+        flyBehavior.fly();            // 委托
+    }
+
+    public void setFlyBehavior(FlyBehavior fb) {  // 运行时也能换！
+        this.flyBehavior = fb;
+    }
+}</code></pre>
+    <p>使用：</p>
+    <pre><code>Dog normalDog = new Dog(new CannotFly());
+normalDog.performFly();  // 不能飞
+
+Dog superDog = new Dog(new FlyWithWings());
+superDog.performFly();   // 扇动翅膀飞行
+
+// 运行时动态改变行为
+superDog.setFlyBehavior(new CannotFly());  // 超狗退役了
+superDog.performFly();   // 不能飞</code></pre>
+    <p>
+      组合的核心优势：<strong>运行时灵活切换</strong>、<strong>每个组件独立测试</strong>、<strong>不会形成臃肿的类层次</strong>。
+      这也是<strong>策略模式</strong>（Strategy Pattern）的基础。
+    </p>
+
+    <h2>什么时候用继承，什么时候用组合？</h2>
+    <p>判断标准很简单：</p>
+    <ul>
+      <li><strong>用继承</strong>：当关系是真正的 "is-a"（狗<strong>是</strong>动物），且父类行为稳定，不会频繁变动。</li>
+      <li><strong>用组合</strong>：当关系是 "has-a"（狗<strong>有</strong>飞行能力），或行为需要灵活替换、运行时切换。</li>
+    </ul>
+    <p>如果拿不准——<strong>先用组合</strong>。组合的代价远小于滥用继承带来的维护灾难。</p>
+
+    <!-- ==================== "高内聚-低耦合"原则 ==================== -->
+
+    <h2>"高内聚-低耦合"原则</h2>
+    <p>
+      高内聚、低耦合（High Cohesion, Low Coupling）是衡量软件设计质量的两个核心指标。
+      它不是一个具体的编码技巧，而是一把<strong>设计尺子</strong>——量一量你的代码，看看哪里需要改进。
+    </p>
+
+    <h2>内聚（Cohesion）</h2>
+    <p>
+      内聚衡量的是<strong>一个类内部</strong>各个成员之间的关联程度。
+      高内聚意味着类的每个属性和方法都与这个类的职责紧密相关——<strong>各司其职，不干分外的事</strong>。
+    </p>
+    <p>低内聚的反例——一个类啥都干：</p>
+    <pre><code>public class GodClass {
+    // 数据库连接
+    public void connectDB() { ... }
+    // 发邮件
+    public void sendEmail() { ... }
+    // 生成报表
+    public void generateReport() { ... }
+    // 播放音乐
+    public void playMusic() { ... }
+}</code></pre>
+    <p>
+      这个类有四个完全不相关的职责——内聚极低，难以理解、难以测试、难以复用。
+    </p>
+    <p>高内聚的写法：拆成四个职责单一的类——<code>DatabaseConnector</code>、<code>EmailSender</code>、<code>ReportGenerator</code>、<code>MusicPlayer</code>。</p>
+
+    <h2>耦合（Coupling）</h2>
+    <p>
+      耦合衡量的是<strong>类与类之间</strong>的依赖程度。
+      低耦合意味着一个类的改动不会像多米诺骨牌一样波及到其他类。
+    </p>
+    <p>高耦合的反例：</p>
+    <pre><code>public class OrderService {
+    private MySQLOrderDao dao = new MySQLOrderDao();  // 强依赖具体类
+    private AlipayService pay  = new AlipayService();  // 强依赖具体类
+
+    public void checkout() {
+        dao.save();    // 直接调具体实现
+        pay.pay();     // 直接调具体实现
+    }
+}</code></pre>
+    <p>换成低耦合的写法——依赖接口：</p>
+    <pre><code>public class OrderService {
+    private OrderDao dao;        // 依赖接口
+    private PayService pay;      // 依赖接口
+
+    public OrderService(OrderDao dao, PayService pay) {
+        this.dao = dao;
+        this.pay = pay;
+    }
+
+    public void checkout() {
+        dao.save();
+        pay.pay();
+    }
+}</code></pre>
+    <p>
+      将来数据库从 MySQL 换成 PostgreSQL，支付从支付宝换成微信——
+      <code>OrderService</code> 代码不动，只需传入不同的实现。这就是<strong>低耦合</strong>带来的威力。
+    </p>
+
+    <h2>内聚与耦合的关系</h2>
+    <p>
+      两者往往是<strong>此消彼长</strong>的关系：高内聚的类通常职责单一、依赖简单，自然就是低耦合；
+      低内聚的"万能类"往往跟谁都有关联，耦合自然就高。所以追求高内聚，往往会顺带降低耦合。
+    </p>
+
+    <h2>常见的耦合来源</h2>
+    <ul>
+      <li><strong>直接 new 具体类</strong>：改用工厂模式或依赖注入。</li>
+      <li><strong>调用静态方法</strong>：静态方法绑定死实现，难以替换。</li>
+      <li><strong>暴露内部数据结构</strong>：比如直接返回 <code>List</code> 的内部引用，调用方可能修改到你的数据。</li>
+      <li><strong>链式调用</strong>：<code>a.getB().getC().doSomething()</code> 违反了迪米特法则（最少知识原则）。</li>
+    </ul>
+
+    <!-- ==================== 小结 ==================== -->
+
+    <h2>小结</h2>
+    <p>今天我们学习了面向对象设计的五个基本原则，它们不是孤立的，而是一个整体：</p>
+    <ul>
+      <li><strong>UML 类图</strong>：设计的通用语言，用简单的图形表达类结构和关系。</li>
+      <li><strong>面向抽象原则</strong>：代码依赖接口而非具体实现——这是所有原则的根基。</li>
+      <li><strong>"开-闭"原则</strong>：对扩展开放，对修改关闭——加新功能不动老代码。</li>
+      <li><strong>"多用组合，少用继承"</strong>：has-a 优先于 is-a，运行时灵活、耦合更低。</li>
+      <li><strong>"高内聚-低耦合"</strong>：类内部拧成一股绳，类之间尽量松绑。</li>
+    </ul>
+    <p>
+      这些原则说到底就是一句话：<strong>让代码更容易改、更容易测、更容易复用。</strong>
+      不必死记硬背，写代码时多回头看看，慢慢就能内化成自己的设计直觉。
+      下一课我们将用这些原则，实际重构一个案例项目。
+    </p>
+
+    <a href="index.html" class="back">&larr; 返回首页</a>
+  </article>
+</main>
+
+<footer>
+  用纸笔写代码，用耐心学 Java
+</footer>
+
+</body>
+</html>
