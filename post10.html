@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>什么是形式化方法 — Java 学习笔记</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #2c2c2c;
+      --muted: #888;
+      --accent: #b14623;
+      --border: #e8e8e8;
+      --code-bg: #f6f6f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    header {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header h1 a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+
+    article h1 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    article .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+    }
+
+    article h2 {
+      font-size: 1.2rem;
+      margin: 36px 0 10px;
+      color: var(--accent);
+    }
+
+    article h3 {
+      font-size: 1.05rem;
+      margin: 28px 0 8px;
+      color: #555;
+    }
+
+    article p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    article ul, article ol {
+      margin-bottom: 14px;
+      padding-left: 22px;
+    }
+
+    article li { margin-bottom: 4px; }
+
+    article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    article code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
+        "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    article p code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 32px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 16px 48px; }
+      header { padding: 28px 0 20px; margin-bottom: 24px; }
+      header h1 { font-size: 1.5rem; }
+      article h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><a href="index.html">Java 学习笔记</a></h1>
+  <p>记录每一段成长 · 从 Hello World 开始</p>
+</header>
+
+<main>
+  <article>
+    <h1>什么是形式化方法</h1>
+    <p class="meta">2026 年 6 月 19 日</p>
+
+    <p>
+      如果你问一个经验丰富的架构师"软件开发的本质是什么"，他很可能告诉你两个字：<strong>建模</strong>。
+      而形式化方法（Formal Methods）就是建模这件事的"数学版本"——它用严谨的数学语言来描述系统、验证设计、确保正确性。
+      这篇文章从《大象——Thinking in UML》的视角出发，聊聊形式化思维与软件建模的内在联系。
+    </p>
+
+    <!-- ==================== 什么是形式化方法 ==================== -->
+
+    <h2>形式化方法：用数学写"说明书"</h2>
+
+    <p>
+      形式化方法的核心理念非常简单：<strong>用数学语言精确描述软件"应该做什么"，然后用数学推理验证它"确实做到了"</strong>。
+      与之对应的，是我们日常写需求文档、画流程图时使用的"非形式化"（自然语言 + 直觉）方式。
+    </p>
+
+    <p>自然语言描述的问题——一个经典例子：</p>
+
+    <blockquote style="border-left:3px solid var(--accent); margin:16px 0; padding:8px 16px; color:#555; background:#fafafa;">
+      "用户登录时，如果连续输错 3 次密码，账户将被锁定 30 分钟。"
+    </blockquote>
+
+    <p>这句话读起来清楚，但藏着大量歧义：</p>
+    <ul>
+      <li>"连续"——是不是只要中间有一次成功就重置计数器？</li>
+      <li>"3 次"——有没有时间窗口？还是一辈子累计？</li>
+      <li>"锁定"——用户收到什么提示？管理员能否提前解锁？</li>
+      <li>"30 分钟"——锁定期间再尝试会重置倒计时吗？</li>
+    </ul>
+
+    <p>
+      形式化方法要解决的就是这个问题——<strong>用无歧义的数学语言写需求，让"我以为你懂了"变成"我们精确地达成一致"</strong>。
+    </p>
+
+    <!-- ==================== 三种主流形式 ==================== -->
+
+    <h2>形式化方法的三大流派</h2>
+
+    <h3>1. 形式化规约（Formal Specification）</h3>
+    <p>
+      用数学语言写"这个系统应该做什么"。最著名的语言包括 Z 语言、VDM、B 方法。它们用集合论和一阶谓词逻辑来描述系统的状态和行为：
+    </p>
+
+    <pre><code>// 一个用数学风格描述的"栈"的规约
+// （不是真正的 Z 语言，但传达了其精神）
+
+状态定义：
+  Stack ::= seq of Item          // 栈就是一个序列
+  maxSize : ℕ                    // 最大容量
+
+操作——Push：
+  前置条件：length(stack) &lt; maxSize
+  后置条件：stack' = stack ⌢ [item]   // 新栈 = 旧栈末尾追加元素
+
+操作——Pop：
+  前置条件：length(stack) &gt; 0
+  后置条件：stack = stack' ⌢ [result]  // 旧栈 = 新栈末尾追加结果</code></pre>
+
+    <p>
+      这种描述没有任何歧义——"前置条件"精确说明了操作何时合法，"后置条件"精确说明了操作的效果。
+      数学家、开发者、测试人员都能从中得到<strong>同一套</strong>理解。
+    </p>
+
+    <h3>2. 模型检验（Model Checking）</h3>
+    <p>
+      把系统抽象成一个有限状态模型（状态 + 状态之间的转移），然后用工具<strong>穷举</strong>所有可能的状态序列，
+      检查是否违反了给定的性质（如"永远不会死锁""缓冲区永远不会溢出"）。
+    </p>
+
+    <p>核心流程：</p>
+    <ol>
+      <li><strong>建模</strong>：将系统抽象为状态机。</li>
+      <li><strong>规约</strong>：用时序逻辑（如 LTL、CTL）表达期望的性质——例如"最终一定会收到响应"。 </li>
+      <li><strong>验证</strong>：模型检验器自动穷举所有状态路径，检查性质是否恒成立。</li>
+      <li><strong>反例</strong>：如果性质不成立，工具给出一个具体的反例路径——"你看，从状态 A 走到状态 B 再走到状态 C 时，死锁了"。</li>
+    </ol>
+
+    <p>
+      模型检验在硬件验证（Intel/AMD 的芯片设计）、通信协议验证（TCP/IP 的安全性质）、
+      以及航空航天软件中有着广泛应用——因为在这些领域，bug 的代价是数十亿美元甚至人命。
+    </p>
+
+    <h3>3. 定理证明（Theorem Proving）</h3>
+    <p>
+      把程序和规约都表示为数学公式，然后像做数学证明题一样，<strong>一步步推导</strong>证明"程序满足规约"。
+      与模型检验不同，定理证明不受状态爆炸的限制，但需要大量的专业知识和人工引导。
+    </p>
+
+    <p>知名的定理证明工具：Coq、Isabelle/HOL、Agda。近年来，Rust 社区也出现了基于定理证明的验证工具（如 Verus）。</p>
+
+    <!-- ==================== 形式化方法的现实地位 ==================== -->
+
+    <h2>形式化方法离我们有多远？</h2>
+
+    <p>
+      大多数 Java 程序员一辈子没碰过形式化方法——这是事实。但这不意味着它无关紧要。实际上，它的影响力是"渗透式"的：
+    </p>
+
+    <ul>
+      <li><strong>类型系统本身就是一种形式化方法</strong>——Java 的泛型、Kotlin 的可空类型、Rust 的所有权系统，本质上都是类型论（Type Theory）的形式化应用。类型检查就是最普及的"轻量级形式化验证"。</li>
+      <li><strong>设计模式的形式化</strong>——GoF 的 23 种设计模式，最初是用自然语言描述的。后来研究者用形式化语言给出了精确的定义——模式不是"经验之谈"，而是有严格数学性质的结构。</li>
+      <li><strong>Amazon/AWS 的部分核心服务</strong>使用 TLA+（一种形式化规约语言）来设计——S3、DynamoDB 的分布式一致性算法在写代码前先用 TLA+ 建模验证过。</li>
+      <li><strong>智能合约审计</strong>——以太坊上的 DeFi 协议越来越多地使用形式化验证来保证资金安全。</li>
+    </ul>
+
+    <!-- ==================== UML 与形式化 ==================== -->
+
+    <h2>UML：从形式化到可视化</h2>
+
+    <p>
+      如果说形式化方法是"用数学为软件建立精确模型"，那么 UML（统一建模语言）就是<strong>把建模这件事从数学家手里拿过来，交给所有开发者</strong>。
+    </p>
+
+    <p>
+      UML 的创造者之一 Grady Booch 曾说过：形式化方法和 UML 不是对立的，而是<strong>同一个问题在不同抽象层次上的解决方案</strong>。
+      形式化方法关心"精确到什么程度"，UML 关心"理解到什么程度"——
+      一个偏向数学家的严谨，一个偏向开发者的直观。
+    </p>
+
+    <h3>UML 的"半形式化"特性</h3>
+
+    <p>
+      UML 不是完全形式化的——它的语法有精确的定义（你可以用 XMI 格式序列化 UML 模型），
+      但很多语义部分是开放的（比如"用例"的粒度、"关联"的导航方向）。
+      这正是 UML 的设计哲学：<strong>在需要精确的地方精确（类图、状态图），在需要灵活的地方灵活（用例图、部署图）</strong>。
+    </p>
+
+    <p>UML 的图中，形式化程度从高到低大致排列：</p>
+    <ol>
+      <li><strong>对象图 / 通信图</strong>——直接反映运行时的对象关系，几乎可以机械地映射为代码。</li>
+      <li><strong>类图 / 包图</strong>——结构清晰，有严格语法，可以正向/逆向工程。</li>
+      <li><strong>状态图 / 活动图</strong>——本质是状态机和流程图，可以用形式化方法验证。</li>
+      <li><strong>顺序图 / 时序图</strong>——表达交互，有一定结构但细节灵活。</li>
+      <li><strong>用例图 / 部署图</strong>——主要是沟通工具，形式化最弱。</li>
+    </ol>
+
+    <!-- ==================== 大象--Thinking in UML ==================== -->
+
+    <h2>《大象——Thinking in UML》：建模不是画图，是思考</h2>
+
+    <p>
+      谭云杰的《大象——Thinking in UML》是一本在中国软件圈里影响深远的 UML 经典。它的书名本身就是核心观点——
+      大象（无形），Thinking（思维），UML 的本质不是学会画那些框框线线，而是<strong>学会用建模的方式思考问题</strong>。
+    </p>
+
+    <h3>核心思想一：建模是"翻译"，不是"记录"</h3>
+    <p>
+      书中反复强调一个观点：建模不是把需求文档抄成 UML 图——那只是换了一种格式。真正的建模是<strong>把现实世界中的业务逻辑"翻译"成软件世界的抽象结构</strong>。
+      这个翻译过程需要理解、裁剪、抽象、重构，就像一位翻译家在两种语言间寻找最精准的表达。
+    </p>
+
+    <p>这和形式化方法的精神完全一致——形式化方法的核心就是把"模糊的需求"翻译成"精确的数学表述"。UML 则是在"精确"和"可理解"之间寻找平衡点。</p>
+
+    <h3>核心思想二：用例驱动——一切从"谁要做什么"开始</h3>
+    <p>
+      书中花了大量篇幅讲<strong>用例（Use Case）</strong>。作者认为，用例不是功能列表，而是<strong>从用户视角重新定义系统的价值边界</strong>。
+      很多项目失败不是因为代码写得差，而是因为从一开始就没搞清楚"到底为谁解决了什么问题"。
+    </p>
+
+    <p>用例建模的核心步骤（取自书中）：</p>
+    <ol>
+      <li><strong>找出参与者（Actor）</strong>——谁在使用系统？人？外部系统？定时任务？</li>
+      <li><strong>找出用例</strong>——参与者想达到什么目的？（不是"系统要有什么功能"，而是"用户要完成什么事"）</li>
+      <li><strong>建立用例之间的关系</strong>——包含（include）、扩展（extend）、泛化。</li>
+      <li><strong>用活动图/顺序图精细化用例场景</strong>——把一句话的用例展开为完整的业务流。</li>
+    </ol>
+
+    <p>书中一个经典例子：</p>
+    <blockquote style="border-left:3px solid var(--accent); margin:16px 0; padding:8px 16px; color:#555; background:#fafafa;">
+      一个银行系统的"转账"不是一个用例——"转账"是银行柜员视角的词汇。真正的用例是<strong>参与者 × 目的</strong>的组合：<br>
+      "储户——从我的账户向另一账户转出资金"<br>
+      "银行柜员——代客户办理跨行转账"<br>
+      "系统管理员——撤销一笔可疑转账"
+    </blockquote>
+
+    <p>
+      同一个业务操作，不同的参与者有不同的关注点——这就是用例建模的深度。
+    </p>
+
+    <h3>核心思想三：从分析到设计——建立"对象世界"</h3>
+    <p>
+      书中将建模过程分为几个递进的层次：
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left; padding:8px 0;">阶段</th>
+        <th style="text-align:left; padding:8px 0;">核心问题</th>
+        <th style="text-align:left; padding:8px 0;">产物</th>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">业务建模</td>
+        <td style="padding:8px 0;">现实世界怎么运作的？</td>
+        <td style="padding:8px 0;">业务用例、业务对象模型</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">系统用例</td>
+        <td style="padding:8px 0;">系统要帮谁做什么？</td>
+        <td style="padding:8px 0;">系统用例图、用例规约</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">分析模型</td>
+        <td style="padding:8px 0;">系统内部需要哪些"概念类"？</td>
+        <td style="padding:8px 0;">分析类图、包图</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">设计模型</td>
+        <td style="padding:8px 0;">这些类在技术上怎么实现？</td>
+        <td style="padding:8px 0;">设计类图、顺序图、状态图</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">实现</td>
+        <td style="padding:8px 0;">代码怎么写？</td>
+        <td style="padding:8px 0;">Java / C# / Python 代码</td>
+      </tr>
+    </table>
+
+    <p>
+      这个分层思想极其重要——<strong>每一层只关心自己层次的问题</strong>。业务建模时不纠结技术细节，
+      设计建模时不纠结业务概念——层层递进，每一步的输入都是上一步的输出。
+    </p>
+
+    <h3>核心思想四：抽象能力——建模的灵魂</h3>
+    <p>
+      书中反复强调，建模工具可以一周学会，但建模能力需要长年积累。建模的本质是<strong>抽象</strong>：
+    </p>
+    <ul>
+      <li><strong>分类</strong>——把相似的东西归为一类，定义一个"概念"（如"账户"不是某一个具体的账户，而是所有账户的共同结构）。</li>
+      <li><strong>泛化</strong>——从多个类中提取共同特征，形成父类（如"活期账户"和"定期账户"泛化为"账户"）。</li>
+      <li><strong>关联</strong>——发现事物之间的联系（如"客户拥有多个账户"）。</li>
+      <li><strong>边界</strong>——决定什么在系统之内、什么在系统之外。</li>
+    </ul>
+
+    <p>这个抽象过程，和形式化方法中"从具体实现中提炼数学规约"的精神如出一辙。</p>
+
+    <!-- ==================== 形式化方法与UML的互补 ==================== -->
+
+    <h2>形式化方法与 UML：互补而非对立</h2>
+
+    <p>
+      形式化方法和 UML 建模解决的是软件开发的<strong>同一个根本问题——如何确保我们构建的系统是正确的</strong>——
+      但走了不同的路径：
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left; padding:8px 0;">对比维度</th>
+        <th style="text-align:left; padding:8px 0;">形式化方法</th>
+        <th style="text-align:left; padding:8px 0;">UML 建模（大象思维）</th>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">语言</td>
+        <td style="padding:8px 0;">数学（集合论、谓词逻辑、时序逻辑）</td>
+        <td style="padding:8px 0;">图形 + 自然语言</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">精确度</td>
+        <td style="padding:8px 0;">完全精确，无歧义</td>
+        <td style="padding:8px 0;">半形式化，有限制的灵活性</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">可验证性</td>
+        <td style="padding:8px 0;">可机器验证（模型检验、定理证明）</td>
+        <td style="padding:8px 0;">可人工评审，部分可自动检查</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">沟通门槛</td>
+        <td style="padding:8px 0;">高（需要数学背景）</td>
+        <td style="padding:8px 0;">中等（需要建模训练，但不需数学基础）</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">适用场景</td>
+        <td style="padding:8px 0;">安全关键系统（航空、医疗、芯片）</td>
+        <td style="padding:8px 0;">企业应用、业务系统、大多数商业软件</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">核心价值</td>
+        <td style="padding:8px 0;">"我们可以证明这个系统没有某类 bug"</td>
+        <td style="padding:8px 0;">"我们所有人对系统有统一的理解"</td>
+      </tr>
+    </table>
+
+    <p>
+      在现实中，两者常常结合使用。一个成熟的软件工程实践可能是：用<strong>UML</strong>建模来沟通和达成共识，
+      然后在<strong>关键模块</strong>（如支付状态机、分布式一致性协议）上使用<strong>形式化方法</strong>进行精确验证。
+    </p>
+
+    <!-- ==================== 示例：从UML到形式化 ==================== -->
+
+    <h2>一个具体例子：从 UML 状态图到形式化验证</h2>
+
+    <p>以订单生命周期为例——先用 UML 状态图描述，再转化为形式化表示：</p>
+
+    <pre><code>// ── UML 状态图（文字描述） ──
+// 待支付 → [支付成功] → 已支付
+// 待支付 → [超时 30min] → 已取消
+// 已支付 → [发货] → 已发货
+// 已发货 → [确认收货] → 已完成
+// 待支付 → [用户取消] → 已取消
+
+// ── 转化为形式化状态定义 ──
+type OrderState = PENDING | PAID | SHIPPED | COMPLETED | CANCELLED
+
+// ── 形式化转移函数 ──
+transitions(PENDING)  = { pay → PAID,
+                          timeout → CANCELLED,
+                          cancel → CANCELLED }
+transitions(PAID)     = { ship → SHIPPED }
+transitions(SHIPPED)  = { confirm → COMPLETED }
+transitions(COMPLETED) = {}
+transitions(CANCELLED) = {}
+
+// ── 可以形式化验证的性质 ──
+// 1. 可达性：从 PENDING 出发，COMPLETED 是否可达？→ 是
+// 2. 安全性：是否存在从 COMPLETED 回到 PENDING 的路径？→ 否 ✓
+// 3. 活性：PENDING 状态下，pay 操作是否始终可触发？→ 是 ✓
+// 4. 死锁检查：是否存在某个状态没有任何可用转移？→ COMPLETED 和 CANCELLED 是终态，合理</code></pre>
+
+    <p>
+      这就是 UML 和形式化方法配合的经典模式：<strong>UML 负责沟通和理解，形式化负责验证和保证</strong>。
+    </p>
+
+    <!-- ==================== 对Java学习者的启示 ==================== -->
+
+    <h2>对 Java 学习者的启示</h2>
+
+    <p>你可能会问：我是一个 Java 学习者，形式化方法和我有什么关系？答案是：<strong>关系很大</strong>。</p>
+
+    <h3>1. 类型系统是日常的形式化</h3>
+    <p>
+      每次你写 <code>List&lt;String&gt;</code> 而不是 <code>List</code>（裸类型），你就在用<strong>类型论</strong>的形式化思想来约束代码——
+      "这个列表只能放字符串"就是一个形式化的断言，编译器帮你验证它。
+    </p>
+
+    <h3>2. 契约式编程（Design by Contract）</h3>
+    <p>
+      Java 的 <code>assert</code>、Guava 的 <code>Preconditions</code>、Spring 的 <code>@NotNull</code>——这些都是形式化方法中
+      "前置条件 / 后置条件 / 不变式"思想在工程中的落地。
+    </p>
+
+    <pre><code>// 这本质上就是"形式化规约"的 Java 版：
+public void transfer(Account from, Account to, BigDecimal amount) {
+    // 前置条件
+    Objects.requireNonNull(from, "转出账户不能为空");
+    Objects.requireNonNull(to, "转入账户不能为空");
+    if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("金额必须大于 0");
+    }
+    if (from.getBalance().compareTo(amount) < 0) {
+        throw new InsufficientBalanceException("余额不足");
+    }
+
+    // 执行转账...
+    from.debit(amount);
+    to.credit(amount);
+
+    // 后置条件（用 assert 验证）
+    assert from.getBalance().compareTo(oldFromBalance.subtract(amount)) == 0;
+    assert to.getBalance().compareTo(oldToBalance.add(amount)) == 0;
+}</code></pre>
+
+    <h3>3. 单元测试是"穷举检验"的简化版</h3>
+    <p>
+      模型检验穷举所有状态——这对大多数业务系统来说不可能（状态空间太大）。但单元测试做的是同样的事：
+      <strong>定义输入、预期输出、边界条件，系统性地验证行为</strong>。好的测试用例设计，本质上就是在做一个"微型的形式化验证"。
+    </p>
+
+    <h3>4. 学会建模，才能写好 Java</h3>
+    <p>
+      《大象——Thinking in UML》传递的最重要的信息是：<strong>代码只是最后一步，思维才是整个过程</strong>。
+      一个 Java 程序员如果只会写语法，就是在搬砖；如果他能在脑子里完成"业务→用例→分析模型→设计模型→代码"这一整套思维过程，
+      他就有了架构师的素养。形式化方法和 UML 建模，都是<strong>训练这种思维方式的工具</strong>。
+    </p>
+
+    <!-- ==================== 小结 ==================== -->
+
+    <h2>小结</h2>
+
+    <p>这篇文章从形式化方法的概念出发，结合《大象——Thinking in UML》的核心思想，梳理了精确建模与可视化建模之间的关系：</p>
+
+    <ul>
+      <li><strong>形式化方法</strong>是用数学语言精确描述和验证软件——三大流派：形式化规约、模型检验、定理证明。用在安全关键系统（航空、芯片、分布式协议），但思想渗透在日常开发中（类型系统、契约式编程、单元测试）。</li>
+      <li><strong>UML 是"半形式化"的</strong>——在精确性和可理解性之间取平衡。它让建模这件事走出数学家的书房，进入所有开发者的日常。</li>
+      <li><strong>《大象——Thinking in UML》</strong>的核心观点：建模不是画图，是思考。从用例驱动出发，经过业务建模→系统用例→分析模型→设计模型→实现的层层递进，最终建立对系统的精确理解。</li>
+      <li><strong>二者互补</strong>：UML 负责沟通和理解，形式化方法负责验证和保证。一个成熟的项目在关键模块上结合使用两者。</li>
+      <li><strong>对 Java 学习者而言</strong>：泛型类型检查、契约式编程、单元测试——这些都是形式化思想在日常编码中的影子。"学会建模，才能写好代码"。</li>
+    </ul>
+
+    <p>
+      最后引用《大象》书中的一句话作结：<strong>"软件世界的构建，始于你对现实世界的理解。"</strong>
+      形式化方法给你理解世界的精确语言，UML 给你理解世界的可视化工具——两者结合，才是完整的建模能力。
+    </p>
+
+    <a href="index.html" class="back">&larr; 返回首页</a>
+  </article>
+</main>
+
+<footer>
+  用纸笔写代码，用耐心学 Java
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>枚举类型 — Java 学习笔记</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #2c2c2c;
+      --muted: #888;
+      --accent: #b14623;
+      --border: #e8e8e8;
+      --code-bg: #f6f6f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    header {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header h1 a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+
+    article h1 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    article .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+    }
+
+    article h2 {
+      font-size: 1.2rem;
+      margin: 36px 0 10px;
+      color: var(--accent);
+    }
+
+    article h3 {
+      font-size: 1.05rem;
+      margin: 28px 0 8px;
+      color: #555;
+    }
+
+    article p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    article ul, article ol {
+      margin-bottom: 14px;
+      padding-left: 22px;
+    }
+
+    article li { margin-bottom: 4px; }
+
+    article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    article code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
+        "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    article p code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 32px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 16px 48px; }
+      header { padding: 28px 0 20px; margin-bottom: 24px; }
+      header h1 { font-size: 1.5rem; }
+      article h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><a href="index.html">Java 学习笔记</a></h1>
+  <p>记录每一段成长 · 从 Hello World 开始</p>
+</header>
+
+<main>
+  <article>
+    <h1>枚举类型</h1>
+    <p class="meta">2026 年 6 月 19 日</p>
+
+    <p>
+      在 Java 中，<code>enum</code> 远不止"一串命名常量"那么简单。很多人对枚举的认知停留在 <code>public static final</code> 的替代品，
+      但 Java 的枚举实际上是一种<strong>特殊的类</strong>——它可以有字段、构造器、方法，甚至可以实现接口、定义抽象方法。
+      从简单的常量集合到复杂的状态机，枚举都能优雅胜任。
+    </p>
+
+    <!-- ==================== 枚举 vs 常量 ==================== -->
+
+    <h2>从常量到枚举：一段血泪进化史</h2>
+
+    <p>
+      在 <code>enum</code> 出现之前（Java 1.4 及更早），定义一组固定常量通常用 <code>public static final</code>：
+    </p>
+
+    <pre><code>// Java 1.4 时代的常量写法 —— 问题重重
+public class Season {
+    public static final int SPRING = 0;
+    public static final int SUMMER = 1;
+    public static final int AUTUMN = 2;
+    public static final int WINTER = 3;
+}
+
+// 使用时 —— 完全没有类型安全
+void setSeason(int season) {
+    // 传入 999 也不会编译报错！
+}
+setSeason(999);   // 编译通过，运行出错</code></pre>
+
+    <p>这种写法的痛点：</p>
+    <ul>
+      <li><strong>没有类型安全</strong>——<code>setSeason(999)</code> 编译期完全合法。</li>
+      <li><strong>没有命名空间</strong>——所有常量平铺在类里，<code>SPRING</code> 和 <code>SUMMER</code> 跟 <code>Season</code> 没有强绑定。</li>
+      <li><strong>打印不友好</strong>——<code>System.out.println(SPRING)</code> 输出 <code>0</code>，而不是 <code>"SPRING"</code>。</li>
+      <li><strong>值可随意篡改</strong>——<code>SPRING == 0</code> 无法防止别人把 0 当成别的含义。</li>
+    </ul>
+
+    <p>Java 5 引入 <code>enum</code> 一举解决了所有这些问题：</p>
+
+    <pre><code>// 最简单的枚举定义
+public enum Season {
+    SPRING, SUMMER, AUTUMN, WINTER
+}
+
+// 使用时 —— 类型安全，编译期检查
+Season s = Season.SPRING;       // ✅
+// Season s = 999;              // ❌ 编译错误！
+setSeason(Season.SUMMER);       // ✅ 只能传入 Season 类型</code></pre>
+
+    <!-- ==================== 枚举的本质 ==================== -->
+
+    <h2>枚举的底层本质：它就是一个类</h2>
+
+    <p>
+      很多人不知道的是：<code>enum</code> 关键字定义出来的东西，编译后就是<strong>一个普通的 class</strong>。
+      你可以用 <code>javap</code> 反编译验证：
+    </p>
+
+    <pre><code>// javap -p Season.class
+public final class Season extends java.lang.Enum&lt;Season&gt; {
+    public static final Season SPRING;
+    public static final Season SUMMER;
+    public static final Season AUTUMN;
+    public static final Season WINTER;
+    private Season();                          // 构造器是私有的
+    public static Season[] values();           // 编译器自动生成
+    public static Season valueOf(String);      // 编译器自动生成
+}</code></pre>
+
+    <p>关键信息：</p>
+    <ul>
+      <li><strong><code>final class</code></strong>——所有枚举都是隐式的 <code>final</code>，不能被继承。</li>
+      <li><strong><code>extends Enum</code></strong>——所有枚举隐式继承 <code>java.lang.Enum&lt;E&gt;</code>，由于 Java 单继承，枚举不能再继承其他类。</li>
+      <li><strong>常量是 <code>public static final</code> 的自身实例</strong>——<code>SPRING</code> 的类型就是 <code>Season</code> 本身。</li>
+      <li><strong>构造器私有</strong>——不能在外部 <code>new Season()</code>，保证枚举实例的唯一性和数量固定。</li>
+    </ul>
+
+    <!-- ==================== 内置方法 ==================== -->
+
+    <h2>内置方法：枚举自带的工具箱</h2>
+
+    <p>每个枚举都从 <code>java.lang.Enum</code> 继承了一套实用方法，外加编译器自动生成的两个静态方法：</p>
+
+    <pre><code>public enum Color { RED, GREEN, BLUE }</code></pre>
+
+    <h3>1. values() —— 遍历所有常量</h3>
+    <pre><code>for (Color c : Color.values()) {
+    System.out.println(c);  // RED / GREEN / BLUE
+}</code></pre>
+
+    <h3>2. valueOf(String) —— 根据名字获取枚举实例</h3>
+    <pre><code>Color c = Color.valueOf("RED");
+System.out.println(c);  // RED
+
+// Color.valueOf("YELLOW");  // 抛出 IllegalArgumentException</code></pre>
+
+    <h3>3. name() 和 toString()</h3>
+    <pre><code>Color c = Color.BLUE;
+System.out.println(c.name());     // "BLUE"  —— 返回枚举常量名，不可覆写
+System.out.println(c.toString()); // "BLUE"  —— 可覆写，默认返回 name()</code></pre>
+
+    <h3>4. ordinal() —— 返回声明顺序（从 0 开始）</h3>
+    <pre><code>System.out.println(Color.RED.ordinal());    // 0
+System.out.println(Color.GREEN.ordinal());  // 1
+System.out.println(Color.BLUE.ordinal());   // 2</code></pre>
+
+    <p>
+      <strong>⚠️ 注意：</strong>尽量不要依赖 <code>ordinal()</code> 的值做业务逻辑——一旦有人调整了枚举常量的声明顺序，所有依赖 <code>ordinal()</code> 的代码都会悄悄出错。
+      如果需要"编号"，应该显式定义一个字段。
+    </p>
+
+    <h3>5. compareTo() —— 基于声明顺序比较</h3>
+    <pre><code>System.out.println(Color.RED.compareTo(Color.BLUE));  // -2 (RED 在 BLUE 前 2 位)</code></pre>
+
+    <!-- ==================== 带字段和方法的枚举 ==================== -->
+
+    <h2>进阶：带字段、构造器和方法</h2>
+
+    <p>
+      这是枚举从"常量集合"升级为"小型类"的关键一步。枚举的每个常量在定义时，可以通过构造器传入参数，然后像对象一样使用：
+    </p>
+
+    <pre><code>public enum Planet {
+    //      质量(kg)      半径(m)
+    MERCURY(3.303e+23, 2.4397e6),
+    VENUS  (4.869e+24, 6.0518e6),
+    EARTH  (5.976e+24, 6.3781e6),
+    MARS   (6.421e+23, 3.3972e6),
+    JUPITER(1.900e+27, 7.1492e7),
+    SATURN (5.688e+26, 6.0268e7),
+    URANUS (8.686e+25, 2.5559e7),
+    NEPTUNE(1.024e+26, 2.4746e7);
+
+    // ===== 实例字段 =====
+    private final double mass;   // 质量（kg）
+    private final double radius; // 半径（m）
+
+    // ===== 构造器（只能是 private） =====
+    Planet(double mass, double radius) {
+        this.mass = mass;
+        this.radius = radius;
+    }
+
+    // ===== 实例方法 =====
+    public double surfaceGravity() {
+        double G = 6.67300E-11;  // 万有引力常数
+        return G * mass / (radius * radius);
+    }
+
+    public double surfaceWeight(double yourMass) {
+        return yourMass * surfaceGravity();
+    }
+
+    // ===== Getter =====
+    public double getMass()   { return mass; }
+    public double getRadius() { return radius; }
+}</code></pre>
+
+    <p>使用起来非常直观：</p>
+
+    <pre><code>// 计算一个人在不同行星上的体重
+double earthWeight = 70.0;  // 地球上 70kg
+double earthGravity = Planet.EARTH.surfaceGravity();
+
+for (Planet p : Planet.values()) {
+    double weightOnPlanet = p.surfaceWeight(earthWeight);
+    System.out.printf("你在 %s 上的体重是 %.1f kg\n",
+                      p, weightOnPlanet);
+}</code></pre>
+
+    <p>输出：</p>
+    <pre><code>你在 MERCURY 上的体重是 26.4 kg
+你在 VENUS 上的体重是 63.4 kg
+你在 EARTH 上的体重是 70.0 kg
+你在 MARS 上的体重是 26.5 kg
+你在 JUPITER 上的体重是 177.3 kg
+你在 SATURN 上的体重是 74.6 kg
+...</code></pre>
+
+    <p>这是枚举能力的一个缩影——<strong>每个枚举常量都是一个功能齐全的对象</strong>，带着自己的数据和行为。</p>
+
+    <!-- ==================== 常量特有行为 ==================== -->
+
+    <h2>高阶：每个常量拥有不同的行为</h2>
+
+    <p>
+      枚举的真正杀手锏——可以<strong>在枚举体内定义抽象方法，然后让每个常量覆写它</strong>。
+      这相当于把一个"策略模式"塞进了枚举里：
+    </p>
+
+    <pre><code>/**
+ * 四则运算 —— 每个运算符常量实现自己的计算方法。
+ */
+public enum Operation {
+    PLUS {
+        @Override
+        public double apply(double x, double y) {
+            return x + y;
+        }
+    },
+    MINUS {
+        @Override
+        public double apply(double x, double y) {
+            return x - y;
+        }
+    },
+    TIMES {
+        @Override
+        public double apply(double x, double y) {
+            return x * y;
+        }
+    },
+    DIVIDE {
+        @Override
+        public double apply(double x, double y) {
+            if (y == 0) throw new ArithmeticException("除数不能为 0");
+            return x / y;
+        }
+    };
+
+    // 抽象方法 —— 每个常量必须实现
+    public abstract double apply(double x, double y);
+}</code></pre>
+
+    <p>使用时，代码极度干净：</p>
+
+    <pre><code>double result = Operation.PLUS.apply(10, 5);   // 15.0
+System.out.println(Operation.TIMES.apply(3, 4)); // 12.0
+
+// 遍历所有运算
+for (Operation op : Operation.values()) {
+    System.out.printf("10 %s 5 = %.2f\n", op, op.apply(10, 5));
+}
+// 输出：
+// 10 PLUS 5 = 15.00
+// 10 MINUS 5 = 5.00
+// 10 TIMES 5 = 50.00
+// 10 DIVIDE 5 = 2.00</code></pre>
+
+    <p>
+        这种方式比传统的 <code>switch-case</code> 安全得多——当你新增一个运算符时，编译器会强制你实现 <code>apply()</code> 方法，
+        永远不会出现"忘了加 case 分支"的 bug。
+    </p>
+
+    <p>加上符号字段，可以打造更丰富的输出：</p>
+
+    <pre><code>public enum Operation {
+    PLUS("+") {
+        public double apply(double x, double y) { return x + y; }
+    },
+    MINUS("-") {
+        public double apply(double x, double y) { return x - y; }
+    },
+    TIMES("*") {
+        public double apply(double x, double y) { return x * y; }
+    },
+    DIVIDE("/") {
+        public double apply(double x, double y) { return x / y; }
+    };
+
+    private final String symbol;  // 运算符符号
+
+    Operation(String symbol) { this.symbol = symbol; }
+
+    @Override
+    public String toString() { return symbol; }
+
+    public abstract double apply(double x, double y);
+}
+
+// 使用
+System.out.println(Operation.PLUS);  // "+" (而不是 "PLUS")</code></pre>
+
+    <!-- ==================== 枚举实现接口 ==================== -->
+
+    <h2>枚举可以实现接口</h2>
+
+    <p>枚举不能继承其他类（已经继承了 <code>Enum</code>），但<strong>可以实现接口</strong>。这让枚举能融入现有的类型体系：</p>
+
+    <pre><code>interface Describable {
+    String describe();
+}
+
+public enum HttpStatus implements Describable {
+    OK(200, "请求成功"),
+    NOT_FOUND(404, "资源未找到"),
+    INTERNAL_SERVER_ERROR(500, "服务器内部错误");
+
+    private final int code;
+    private final String message;
+
+    HttpStatus(int code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
+    @Override
+    public String describe() {
+        return code + " " + message;
+    }
+
+    public int getCode() { return code; }
+}
+
+// 枚举能用在任何期望 Describable 的地方
+void logStatus(Describable d) {
+    System.out.println(d.describe());
+}
+logStatus(HttpStatus.NOT_FOUND);  // "404 资源未找到"</code></pre>
+
+    <!-- ==================== EnumSet 和 EnumMap ==================== -->
+
+    <h2>专用集合：EnumSet 和 EnumMap</h2>
+
+    <p>Java 为枚举量身定制了两款高性能集合——它们比通用的 <code>HashSet</code> / <code>HashMap</code> 快得多：</p>
+
+    <h3>EnumSet —— 枚举的位向量集合</h3>
+    <p>
+        <code>EnumSet</code> 内部用位向量（bit vector）实现，每个枚举常量只占 1 个 bit。插入、删除、查找都是 O(1)，而且极省内存：
+    </p>
+
+    <pre><code>import java.util.EnumSet;
+import java.util.Set;
+
+Set&lt;Color&gt; primary = EnumSet.of(Color.RED, Color.GREEN, Color.BLUE);
+Set&lt;Color&gt; allColors = EnumSet.allOf(Color.class);
+Set&lt;Color&gt; none = EnumSet.noneOf(Color.class); // 空集合
+
+// 集合运算
+EnumSet&lt;Color&gt; warm = EnumSet.of(Color.RED);
+warm.contains(Color.RED);    // true
+warm.contains(Color.BLUE);   // false</code></pre>
+
+    <p><strong>EnumSet 不可以用 <code>new</code> 实例化</strong>——它没有 public 构造器，必须通过静态工厂方法创建。</p>
+
+    <h3>EnumMap —— 枚举键的专用 Map</h3>
+    <p>
+        <code>EnumMap</code> 内部用数组实现，键的哈希计算被替换成了 <code>ordinal()</code> 索引。没有哈希冲突，没有链表遍历，性能极佳：
+    </p>
+
+    <pre><code>import java.util.EnumMap;
+import java.util.Map;
+
+Map&lt;Color, String&gt; colorNamesCN = new EnumMap&lt;&gt;(Color.class);
+colorNamesCN.put(Color.RED,   "红色");
+colorNamesCN.put(Color.GREEN, "绿色");
+colorNamesCN.put(Color.BLUE,  "蓝色");
+
+System.out.println(colorNamesCN.get(Color.RED));  // "红色"
+
+// 遍历 —— 顺序和枚举声明顺序一致
+for (Map.Entry&lt;Color, String&gt; entry : colorNamesCN.entrySet()) {
+    System.out.println(entry.getKey() + " → " + entry.getValue());
+}</code></pre>
+
+    <!-- ==================== 应用场景 ==================== -->
+
+    <h2>六大经典应用场景</h2>
+
+    <h3>场景一：替代常量——消除魔法数字</h3>
+    <p>这是最基本的用法，但即便是这个"基本"也比 <code>int</code> 常量强太多：</p>
+
+    <pre><code>// ❌ 坏味道：魔法数字
+if (userStatus == 1) { ... }  // 1 是什么意思？
+
+// ✅ 枚举：自文档化
+if (userStatus == UserStatus.ACTIVE) { ... }</code></pre>
+
+    <h3>场景二：状态机</h3>
+    <p>利用"常量特有行为"，把状态转换逻辑编码到每个状态里：</p>
+
+    <pre><code>public enum OrderState {
+    PENDING {
+        @Override
+        public OrderState next() { return CONFIRMED; }
+        @Override
+        public boolean canCancel() { return true; }
+    },
+    CONFIRMED {
+        @Override
+        public OrderState next() { return SHIPPED; }
+        @Override
+        public boolean canCancel() { return true; }
+    },
+    SHIPPED {
+        @Override
+        public OrderState next() { return DELIVERED; }
+        @Override
+        public boolean canCancel() { return false; }
+    },
+    DELIVERED {
+        @Override
+        public OrderState next() { return this; }  // 终态
+        @Override
+        public boolean canCancel() { return false; }
+    };
+
+    public abstract OrderState next();
+    public abstract boolean canCancel();
+}
+
+// 使用
+OrderState state = OrderState.PENDING;
+state = state.next();   // → CONFIRMED
+state = state.next();   // → SHIPPED
+state = state.next();   // → DELIVERED
+System.out.println(state.canCancel());  // false</code></pre>
+
+    <h3>场景三：策略模式</h3>
+    <p>用枚举代替大量的 <code>if-else</code> 或 <code>switch-case</code>——前面 <code>Operation</code> 的例子就是典型。再举一个支付方式：</p>
+
+    <pre><code>public enum PaymentMethod {
+    ALIPAY {
+        @Override
+        public void pay(double amount) {
+            System.out.printf("支付宝支付：¥%.2f\n", amount);
+        }
+    },
+    WECHAT {
+        @Override
+        public void pay(double amount) {
+            System.out.printf("微信支付：¥%.2f\n", amount);
+        }
+    },
+    BANK_CARD {
+        @Override
+        public void pay(double amount) {
+            System.out.printf("银行卡支付：¥%.2f\n", amount);
+        }
+    };
+
+    public abstract void pay(double amount);
+}
+
+// 一行调用，无需 if-else
+PaymentMethod method = PaymentMethod.valueOf(config.get("pay.method"));
+method.pay(100.00);</code></pre>
+
+    <h3>场景四：单例模式</h3>
+    <p>枚举天然保证单例——JVM 确保每个枚举常量只存在一个实例，而且线程安全、防反射攻击、防序列化破坏：</p>
+
+    <pre><code>public enum DatabaseConnection {
+    INSTANCE;
+
+    private Connection connection;
+
+    DatabaseConnection() {
+        // 初始化连接...
+        System.out.println("数据库连接已建立");
+    }
+
+    public Connection getConnection() { return connection; }
+
+    public void executeQuery(String sql) {
+        // ...
+    }
+}
+
+// 全局唯一实例
+DatabaseConnection.INSTANCE.executeQuery("SELECT * FROM users");</code></pre>
+
+    <p>这是 Joshua Bloch 在《Effective Java》中推荐的实现单例的最佳方式——比双重检查锁和静态内部类都更简单可靠。</p>
+
+    <h3>场景五：命令模式</h3>
+
+    <pre><code>public enum Command {
+    SAVE   { void execute() { System.out.println("保存文件"); } },
+    UNDO   { void execute() { System.out.println("撤销操作"); } },
+    REDO   { void execute() { System.out.println("重做操作"); } },
+    DELETE { void execute() { System.out.println("删除"); } };
+
+    abstract void execute();
+}
+
+// 根据用户输入分发命令
+String userInput = "SAVE";
+Command.valueOf(userInput.toUpperCase()).execute();</code></pre>
+
+    <h3>场景六：数据字典 / 码表映射</h3>
+
+    <pre><code>public enum Gender {
+    MALE(1, "男"),
+    FEMALE(2, "女"),
+    UNKNOWN(0, "未知");
+
+    private final int code;
+    private final String label;
+
+    Gender(int code, String label) {
+        this.code = code;
+        this.label = label;
+    }
+
+    // 根据数据库中的编码查找对应枚举
+    public static Gender fromCode(int code) {
+        for (Gender g : values()) {
+            if (g.code == code) return g;
+        }
+        return UNKNOWN;  // 默认值
+    }
+
+    public int getCode()  { return code; }
+    public String getLabel() { return label; }
+}
+
+// 数据库查出来的 2 → "女"
+Gender g = Gender.fromCode(2);
+System.out.println(g.getLabel());  // "女"</code></pre>
+
+    <!-- ==================== 枚举 vs 常量全面对比 ==================== -->
+
+    <h2>枚举 vs public static final：全面对比</h2>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left; padding:8px 0;">对比维度</th>
+        <th style="text-align:left; padding:8px 0;"><code>public static final int</code></th>
+        <th style="text-align:left; padding:8px 0;"><code>enum</code></th>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">类型安全</td>
+        <td style="padding:8px 0;">无（int 可以随意替换）</td>
+        <td style="padding:8px 0;">完全类型安全，编译期检查</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">可读性</td>
+        <td style="padding:8px 0;">差（数字无意义）</td>
+        <td style="padding:8px 0;">极好（自文档化）</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">命名空间</td>
+        <td style="padding:8px 0;">需前缀约定（如 STATUS_ACTIVE）</td>
+        <td style="padding:8px 0;">天然通过类型隔离</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">能否有方法</td>
+        <td style="padding:8px 0;">不能</td>
+        <td style="padding:8px 0;">可以有字段、构造器、方法</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">能否有不同行为</td>
+        <td style="padding:8px 0;">不能（需要 switch-case）</td>
+        <td style="padding:8px 0;">每个常量可覆写抽象方法</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">序列化支持</td>
+        <td style="padding:8px 0;">需手动处理</td>
+        <td style="padding:8px 0;">内置，反序列化后仍是同一实例</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">switch 支持</td>
+        <td style="padding:8px 0;">支持（但需要 break）</td>
+        <td style="padding:8px 0;">支持，编译器会检查完整性</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">线程安全</td>
+        <td style="padding:8px 0;">天然不可变（基础类型）</td>
+        <td style="padding:8px 0;">JVM 保证单例，线程安全</td>
+      </tr>
+    </table>
+
+    <!-- ==================== switch 中的枚举 ==================== -->
+
+    <h2>枚举与 switch 的配合</h2>
+
+    <p>枚举可以用于 <code>switch</code> 语句，而且代码更安全——编译器能检查是否覆盖了所有枚举常量：</p>
+
+    <pre><code>Color c = Color.RED;
+
+switch (c) {
+    case RED:   System.out.println("红色"); break;
+    case GREEN: System.out.println("绿色"); break;
+    case BLUE:  System.out.println("蓝色"); break;
+    // 如果漏了一个，一些 IDE 会给出警告
+}
+
+// Java 14+ 还可以用 switch 表达式，更简洁：
+String name = switch (c) {
+    case RED   -> "红色";
+    case GREEN -> "绿色";
+    case BLUE  -> "蓝色";
+};</code></pre>
+
+    <p>
+        ⚠️ 不过要注意：当枚举拥有"常量特有行为"（每个常量覆写了抽象方法）时，<strong>优先使用方法调用而不是 switch</strong>。
+        switch 的问题在于——新增枚举常量时编译器不会报错，而覆写抽象方法会被编译器强制检查。
+    </p>
+
+    <!-- ==================== 注意事项 ==================== -->
+
+    <h2>使用枚举的注意事项</h2>
+
+    <ol>
+      <li>
+        <strong>构造器自动为 private</strong>——你不需要也不能写 <code>private</code>，编译器会隐式加上。
+        这保证外部不能 <code>new</code>，枚举的实例集合在类加载时就完全确定。
+      </li>
+      <li>
+        <strong>枚举常量必须在最前面</strong>——如果有字段、构造器、方法，枚举常量声明必须是第一项，用分号分隔：
+        <code>RED, GREEN, BLUE;</code>（注意最后的分号）。
+      </li>
+      <li>
+        <strong>枚举不能被继承</strong>——编译后是 <code>final class</code>。但枚举<strong>可以实现接口</strong>，这是扩展枚举功能的正确方式。
+      </li>
+      <li>
+        <strong>valueOf 大小写敏感</strong>——<code>Color.valueOf("red")</code> 会抛异常，必须是 <code>"RED"</code>。
+        如果需要忽略大小写，可以自己写一个 <code>fromString()</code> 静态方法。
+      </li>
+      <li>
+        <strong>避免在构造器中调用可覆写方法</strong>——和普通类一样，枚举构造器中调用会被子类（匿名内部类）覆写的方法是危险的，
+        因为此时子类字段尚未初始化。
+      </li>
+      <li>
+        <strong>需要动态扩展常量集合时，不要用枚举</strong>——比如用户自定义标签、插件列表等场景，应该用类 + 注册机制。
+        枚举的常量集合在编译期就固定了。
+      </li>
+    </ol>
+
+    <!-- ==================== 综合实战 ==================== -->
+
+    <h2>综合实战：工作日计算器</h2>
+    <p>将枚举的能力整合起来，实现一个实用的工具类：</p>
+
+    <pre><code>public enum DayOfWeek {
+    MONDAY("周一", true),
+    TUESDAY("周二", true),
+    WEDNESDAY("周三", true),
+    THURSDAY("周四", true),
+    FRIDAY("周五", true),
+    SATURDAY("周六", false) {
+        @Override
+        public String getGreeting() {
+            return "周末愉快！享受你的周六~";
+        }
+    },
+    SUNDAY("周日", false) {
+        @Override
+        public String getGreeting() {
+            return "周末愉快！明天就周一了~";
+        }
+    };
+
+    private final String chineseName;
+    private final boolean isWorkday;
+
+    DayOfWeek(String chineseName, boolean isWorkday) {
+        this.chineseName = chineseName;
+        this.isWorkday = isWorkday;
+    }
+
+    // ── 通用方法 ──
+    public String getGreeting() {
+        return isWorkday ? "加油打工人！" : "好好休息~";
+    }
+
+    public boolean isWorkday() { return isWorkday; }
+
+    public String getChineseName() { return chineseName; }
+
+    // ── 计算距离下一个工作日还有几天 ──
+    public int daysUntilNextWorkday() {
+        DayOfWeek current = this;
+        int days = 0;
+        do {
+            days++;
+            current = current.next();
+        } while (!current.isWorkday);
+        return days;
+    }
+
+    // ── 获取下一天 ──
+    public DayOfWeek next() {
+        DayOfWeek[] values = values();
+        return values[(this.ordinal() + 1) % values.length];
+    }
+
+    // ── 测试 ──
+    public static void main(String[] args) {
+        DayOfWeek today = DayOfWeek.FRIDAY;
+
+        System.out.println("今天是：" + today.getChineseName());
+        System.out.println("问候语：" + today.getGreeting());
+        System.out.println("是工作日吗？" + today.isWorkday());
+        System.out.println("距离下一个工作日还有 " +
+                           today.daysUntilNextWorkday() + " 天");
+
+        System.out.println("\n--- 周末问候 ---");
+        System.out.println(DayOfWeek.SATURDAY.getGreeting());
+        System.out.println(DayOfWeek.SUNDAY.getGreeting());
+    }
+}</code></pre>
+
+    <p>这个例子集中体现了枚举的三大能力：</p>
+    <ul>
+      <li><strong>带字段和构造器</strong>——每个星期几都有中文名和工作日标记。</li>
+      <li><strong>常量特有行为</strong>——周六周日覆写了 <code>getGreeting()</code>，返回专属问候语。</li>
+      <li><strong>通用业务方法</strong>——<code>next()</code> 和 <code>daysUntilNextWorkday()</code> 在所有常量间共享。</li>
+    </ul>
+
+    <!-- ==================== 小结 ==================== -->
+
+    <h2>小结</h2>
+
+    <p>今天我们从"int 常量的痛点"出发，系统学习了 Java 枚举类型的全貌：</p>
+
+    <ul>
+      <li><strong>枚举的本质</strong>：编译后是一个 <code>final class</code>，继承自 <code>java.lang.Enum</code>。每个常量是自身的 <code>public static final</code> 实例。</li>
+      <li><strong>基础能力</strong>：<code>values()</code>、<code>valueOf()</code>、<code>name()</code>、<code>ordinal()</code>——比 int 常量强一万倍的类型安全和自文档化。</li>
+      <li><strong>进阶能力</strong>：字段、构造器、方法——每个枚举常量都可以是一个功能完整的对象。</li>
+      <li><strong>高阶能力</strong>：抽象方法 + 常量覆写——将策略模式融入枚举，消除 switch-case。</li>
+      <li><strong>专用集合</strong>：<code>EnumSet</code>（位向量）和 <code>EnumMap</code>（数组索引），极致性能。</li>
+      <li><strong>六大场景</strong>：替代常量、状态机、策略模式、单例、命令模式、数据字典。</li>
+    </ul>
+
+    <p>
+        Java 的枚举类型是一个被严重低估的特性。很多人把它当成"C 语言的 enum"，只用来定义命名常量——
+        这就像把智能手机当成手电筒用。枚举真正的威力在于：<strong>它是一种受限的、类型安全的、可以携带数据和行为的类</strong>。
+        当你优雅地用枚举替代了一堆 <code>if-else</code> 和 <code>switch-case</code> 时，你就真正掌握了这门语言。
+    </p>
+
+    <a href="index.html" class="back">&larr; 返回首页</a>
+  </article>
+</main>
+
+<footer>
+  用纸笔写代码，用耐心学 Java
+</footer>
+
+</body>
+</html>

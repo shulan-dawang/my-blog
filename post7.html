@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java 的反射机制 — Java 学习笔记</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #2c2c2c;
+      --muted: #888;
+      --accent: #b14623;
+      --border: #e8e8e8;
+      --code-bg: #f6f6f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    header {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header h1 a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+
+    article h1 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    article .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+    }
+
+    article h2 {
+      font-size: 1.2rem;
+      margin: 36px 0 10px;
+      color: var(--accent);
+    }
+
+    article h3 {
+      font-size: 1.05rem;
+      margin: 28px 0 8px;
+      color: #555;
+    }
+
+    article p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    article ul, article ol {
+      margin-bottom: 14px;
+      padding-left: 22px;
+    }
+
+    article li { margin-bottom: 4px; }
+
+    article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    article code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
+        "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    article p code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 32px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 16px 48px; }
+      header { padding: 28px 0 20px; margin-bottom: 24px; }
+      header h1 { font-size: 1.5rem; }
+      article h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><a href="index.html">Java 学习笔记</a></h1>
+  <p>记录每一段成长 · 从 Hello World 开始</p>
+</header>
+
+<main>
+  <article>
+    <h1>Java 的反射机制：运行时探查与动态操作</h1>
+    <p class="meta">2026 年 6 月 19 日</p>
+
+    <p>
+      在 Java 中，我们通常通过 <code>new</code> 关键字创建对象，通过点号调用方法——这些都是<strong>编译期就确定</strong>的操作。
+      但 Java 还有一项强大的"黑科技"——<strong>反射机制（Reflection）</strong>，它允许程序在<strong>运行时</strong>探查类的内部结构，并动态地创建对象、调用方法、访问字段，
+      就像拿到了一把可以透视任意类的 X 光枪。
+    </p>
+
+    <!-- ==================== 什么是反射 ==================== -->
+
+    <h2>反射是什么？一个形象的比喻</h2>
+    <p>
+      想象你拿到一个密封的箱子（某个类），上面没有任何标签。反射就是给了你一台扫描仪：你可以扫描出箱子里有什么零件（字段）、
+      有哪些按钮可以按（方法）、怎么组装（构造器），甚至可以直接操作这些零件和按钮——<strong>一切都在程序运行的过程中完成</strong>。
+    </p>
+    <p>
+      更正式地说：反射是 Java 提供的一组 API（主要在 <code>java.lang.reflect</code> 包中），用于在运行时：
+    </p>
+    <ul>
+      <li><strong>探查</strong>任意类的构造器、字段、方法、注解等元信息。</li>
+      <li><strong>创建</strong>对象实例（不需要 <code>new</code>）。</li>
+      <li><strong>调用</strong>方法（不需要在代码中显式写出方法名）。</li>
+      <li><strong>读写</strong>字段（包括私有的）。</li>
+    </ul>
+    <p>反射是一切框架的基石——Spring、MyBatis、JUnit 的背后，都离不开反射的身影。</p>
+
+    <!-- ==================== Class 类 ==================== -->
+
+    <h2>一切的入口：Class 对象</h2>
+    <p>
+      JVM 在加载每一个类时，都会在堆内存中创建一个唯一的 <code>Class</code> 对象，用来保存这个类的全部元信息（类名、字段列表、方法列表、父类等）。
+      这个 <code>Class</code> 对象就是反射的入口——拿到了它，就拿到了洞察类内部的一切权限。
+    </p>
+
+    <h3>获取 Class 对象的三种方式</h3>
+
+    <pre><code>// 方式一：通过类的 .class 属性（编译期就知道类名时用）
+Class&lt;String&gt; clazz1 = String.class;
+
+// 方式二：通过对象的 getClass() 方法（已有对象实例时用）
+String s = "hello";
+Class&lt;?&gt; clazz2 = s.getClass();
+
+// 方式三：通过 Class.forName() 加载（类名在运行时才能确定时用）
+Class&lt;?&gt; clazz3 = Class.forName("java.lang.String");</code></pre>
+
+    <p>三种方式拿到的 <code>Class</code> 对象是<strong>同一个</strong>——每个类在 JVM 中只有一个 <code>Class</code> 实例：</p>
+
+    <pre><code>System.out.println(clazz1 == clazz2);   // true
+System.out.println(clazz2 == clazz3);   // true</code></pre>
+
+    <p>
+      <strong><code>Class.forName()</code> 是最"动态"的方式</strong>——类名可以来自配置文件、用户输入、数据库，是框架实现插件化和 IOC 的核心手段。
+      注意它会触发类的<strong>静态初始化</strong>（执行 static 代码块），而 <code>.class</code> 不会。
+    </p>
+
+    <!-- ==================== 运行时探查 ==================== -->
+
+    <h2>运行时探查：X 光透视类的五脏六腑</h2>
+
+    <p>
+      拿到 <code>Class</code> 对象后，就可以逐一探查它的构造器、字段、方法。以下面这个类作为探查对象：
+    </p>
+
+    <pre><code>public class Person {
+    public String name;
+    private int age;
+    private String email;
+
+    public Person() {}
+
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    private Person(String name) {
+        this.name = name;
+    }
+
+    public String getName() { return name; }
+    private void setAge(int age) { this.age = age; }
+    public void sayHello() { System.out.println("Hello, I am " + name); }
+    private String getEmail() { return email; }
+}</code></pre>
+
+    <h3>探查构造器（Constructor）</h3>
+
+    <pre><code>Class&lt;?&gt; clazz = Class.forName("Person");
+
+// 获取所有 public 构造器
+Constructor&lt;?&gt;[] publicCtors = clazz.getConstructors();
+for (Constructor&lt;?&gt; c : publicCtors) {
+    System.out.println("public 构造器：" + c);
+    // 输出：public Person()
+    //       public Person(java.lang.String, int)
+}
+
+// 获取指定参数类型的 public 构造器
+Constructor&lt;?&gt; ctor = clazz.getConstructor(String.class, int.class);
+
+// 获取所有构造器（包括 private）
+Constructor&lt;?&gt;[] allCtors = clazz.getDeclaredConstructors();
+for (Constructor&lt;?&gt; c : allCtors) {
+    System.out.println("全部构造器：" + c);
+    // 输出三个构造器，包括 private Person(String)
+}</code></pre>
+
+    <h3>探查字段（Field）</h3>
+
+    <pre><code>// 获取所有 public 字段（包括继承的）
+Field[] publicFields = clazz.getFields();
+// → 只有 public String name
+
+// 获取本类声明的所有字段（包括 private）
+Field[] allFields = clazz.getDeclaredFields();
+for (Field f : allFields) {
+    System.out.println(f.getName() + " : " + f.getType().getSimpleName());
+    // 输出：name : String
+    //       age : int
+    //       email : String
+}</code></pre>
+
+    <p>每个 <code>Field</code> 对象还可以进一步探查：</p>
+    <ul>
+      <li><code>f.getName()</code> — 字段名</li>
+      <li><code>f.getType()</code> — 字段类型（返回 <code>Class&lt;?&gt;</code>）</li>
+      <li><code>f.getModifiers()</code> — 修饰符（可通过 <code>Modifier.isPrivate(f.getModifiers())</code> 判断）</li>
+      <li><code>f.getAnnotations()</code> — 字段上的注解</li>
+    </ul>
+
+    <h3>探查方法（Method）</h3>
+
+    <pre><code>// 获取所有 public 方法（包括继承自 Object 的）
+Method[] publicMethods = clazz.getMethods();
+
+// 获取本类声明的所有方法（包括 private）
+Method[] allMethods = clazz.getDeclaredMethods();
+for (Method m : allMethods) {
+    System.out.println(m.getName() + " → 返回 " +
+        m.getReturnType().getSimpleName());
+    // 输出：getName → 返回 String
+    //       setAge → 返回 void
+    //       sayHello → 返回 void
+    //       getEmail → 返回 String
+}
+
+// 获取指定签名的方法
+Method sayHello = clazz.getMethod("sayHello");             // 无参
+Method setAge = clazz.getDeclaredMethod("setAge", int.class); // 有参</code></pre>
+
+    <p>方法的关键元信息：</p>
+    <ul>
+      <li><code>m.getName()</code> — 方法名</li>
+      <li><code>m.getReturnType()</code> — 返回值类型</li>
+      <li><code>m.getParameterTypes()</code> — 参数类型数组</li>
+      <li><code>m.getExceptionTypes()</code> — 声明的异常类型</li>
+    </ul>
+
+    <h3>探查其他元信息</h3>
+
+    <pre><code>// 类名
+System.out.println(clazz.getName());           // Person（全限定名）
+System.out.println(clazz.getSimpleName());     // Person
+
+// 父类
+System.out.println(clazz.getSuperclass());     // class java.lang.Object
+
+// 实现的接口
+Class&lt;?&gt;[] interfaces = clazz.getInterfaces();
+
+// 修饰符
+int mod = clazz.getModifiers();
+System.out.println(Modifier.isPublic(mod));    // true
+System.out.println(Modifier.toString(mod));    // public</code></pre>
+
+    <!-- ==================== 动态操作 ==================== -->
+
+    <h2>动态操作：从窥探到掌控</h2>
+    <p>探查只是第一步，反射的真正威力在于<strong>动态操作</strong>——在运行时创建对象、调用方法、读写字段。</p>
+
+    <h3>1. 动态创建对象</h3>
+
+    <pre><code>Class&lt;?&gt; clazz = Class.forName("Person");
+
+// 调用无参构造器（要求构造器是 public）
+Object obj1 = clazz.getDeclaredConstructor().newInstance();
+
+// 调用有参构造器
+Constructor&lt;?&gt; ctor = clazz.getConstructor(String.class, int.class);
+Object obj2 = ctor.newInstance("张三", 25);
+
+// 调用 private 构造器（需要"暴力"破解）
+Constructor&lt;?&gt; privateCtor = clazz.getDeclaredConstructor(String.class);
+privateCtor.setAccessible(true);   // 绕过访问检查
+Object obj3 = privateCtor.newInstance("李四");</code></pre>
+
+    <p>
+      关键点：<code>setAccessible(true)</code> 是反射的"万能钥匙"——它可以绕过 Java 的访问控制，让你访问 private 构造器、字段和方法。
+      但这把钥匙也意味着<strong>你正在打破封装</strong>，需要谨慎使用。
+    </p>
+
+    <h3>2. 动态读取与修改字段</h3>
+
+    <pre><code>Object obj = clazz.getDeclaredConstructor().newInstance();
+
+// 读写 public 字段 —— 直接操作
+Field nameField = clazz.getField("name");
+nameField.set(obj, "王五");                          // 设置值
+System.out.println(nameField.get(obj));              // 读取值 → "王五"
+
+// 读写 private 字段 —— 需要 setAccessible
+Field ageField = clazz.getDeclaredField("age");
+ageField.setAccessible(true);                        // 突破封装
+ageField.set(obj, 30);                               // 设置私有字段
+System.out.println(ageField.get(obj));               // 读取私有字段 → 30
+
+// 操作静态字段 —— obj 参数传 null
+Field staticField = clazz.getDeclaredField("COUNT");
+staticField.setAccessible(true);
+staticField.set(null, 100);                          // 静态字段不需要实例</code></pre>
+
+    <p>一个常见坑：<code>getField()</code> 只能获取 <strong>public</strong> 字段（含继承的），<code>getDeclaredField()</code> 可以获取本类声明的<strong>所有</strong>字段（含 private），但不包括继承的。</p>
+
+    <h3>3. 动态调用方法</h3>
+
+    <pre><code>Object obj = clazz.getDeclaredConstructor().newInstance();
+
+// 调用 public 无参方法
+Method sayHello = clazz.getMethod("sayHello");
+sayHello.invoke(obj);   // 输出：Hello, I am null
+
+// 调用 private 有参方法
+Method setAge = clazz.getDeclaredMethod("setAge", int.class);
+setAge.setAccessible(true);
+setAge.invoke(obj, 28);  // 相当于 obj.setAge(28)
+
+// 调用有返回值的方法
+Method getName = clazz.getMethod("getName");
+Object result = getName.invoke(obj);
+System.out.println("名字：" + result);
+
+// 调用静态方法 —— obj 传 null
+Method staticMethod = clazz.getDeclaredMethod("staticHelper");
+staticMethod.invoke(null);</code></pre>
+
+    <p>
+      <code>invoke()</code> 是核心方法：第一个参数是目标对象（静态方法传 <code>null</code>），后面是方法参数。返回值是 <code>Object</code>，需要自行转型。
+    </p>
+
+    <h3>4. 动态操作数组</h3>
+
+    <pre><code>// 创建数组
+Object arr = Array.newInstance(String.class, 5);
+
+// 给数组元素赋值
+Array.set(arr, 0, "Hello");
+Array.set(arr, 1, "World");
+
+// 读取数组元素
+System.out.println(Array.get(arr, 0));  // Hello
+System.out.println(Array.getLength(arr)); // 5</code></pre>
+
+    <!-- ==================== setAccessible 深度解析 ==================== -->
+
+    <h2>setAccessible：反射的"万能钥匙"</h2>
+    <p>
+      <code>setAccessible(true)</code> 是反射中最具争议的方法。它关闭了 Java 的访问检查，让你能触碰 private 成员——强大但危险。
+    </p>
+
+    <h3>它做了什么？</h3>
+    <p>
+      Java 的访问控制（private / default / protected / public）是由 JVM 在运行时强制检查的。当你通过反射访问一个 private 成员时，
+      JVM 会先检查调用者是否有权限——<code>setAccessible(true)</code> 就是告诉 JVM："<strong>跳过这个检查</strong>"。
+    </p>
+
+    <h3>它和安全管理器</h3>
+    <p>
+      如果 JVM 安装了 <code>SecurityManager</code>（如某些企业环境或 Applet），调用 <code>setAccessible(true)</code> 可能抛出
+      <code>SecurityException</code>。现代 Java 应用通常没有 SecurityManager，所以大多数场景下它都能正常工作。
+    </p>
+
+    <h3>性能代价</h3>
+    <p>
+      <code>setAccessible(true)</code> 本身没有太大性能开销，但反射调用整体比直接调用慢很多——通常慢 2~10 倍。
+      因为反射需要经过装箱拆箱、数组包装、访问检查等多个中间层。对于性能敏感的热点代码，应避免反射，
+      或使用 <code>setAccessible</code> 一次性检查后缓存 <code>Method</code> / <code>Field</code> 句柄来减小开销。
+    </p>
+
+    <!-- ==================== 反射的实际应用 ==================== -->
+
+    <h2>反射在实际框架中的应用</h2>
+    <p>反射不是学术玩具——它是 Java 生态的基石。理解这些场景，你就知道反射为何如此重要：</p>
+
+    <h3>场景一：IOC 容器（Spring）</h3>
+    <p>
+      Spring 读取配置文件或扫描注解后，通过 <code>Class.forName()</code> 加载 Bean 的类，
+      用反射创建实例，再通过反射注入依赖（<code>@Autowired</code> 字段调用 <code>field.set(bean, dependency)</code>）。
+      整个过程无需 <code>new</code>，完全由框架控制对象的生命周期。
+    </p>
+
+    <h3>场景二：ORM 框架（MyBatis / Hibernate）</h3>
+    <p>
+      从数据库查询出一行数据后，ORM 框架通过反射创建实体对象，然后根据列名匹配字段名，
+      调用 <code>field.set(entity, columnValue)</code> 把数据填充进去。你写的 <code>User</code> 类不需要继承任何特殊类——
+      反射让它和数据库表"自动"映射。
+    </p>
+
+    <h3>场景三：单元测试框架（JUnit）</h3>
+    <p>
+      JUnit 运行时扫描测试类，找出所有带 <code>@Test</code> 注解的方法，通过 <code>method.invoke(testInstance)</code>
+      逐个执行。这也是为什么测试方法可以是任意的——JUnit 不需要在编译期知道它们的存在。
+    </p>
+
+    <h3>场景四：动态代理（Java Proxy / CGLIB）</h3>
+    <p>
+      MyBatis 的 Mapper 接口不需要实现类——你在接口上写个 <code>@Select</code> 注解，框架就能运行。
+      这背后是 Java 动态代理 + 反射：代理对象在运行时拦截方法调用，读取注解中的 SQL，执行查询，返回结果。
+    </p>
+
+    <h3>场景五：IDE 的代码补全</h3>
+    <p>
+      你在 IDE 中敲下 <code>obj.</code> 时弹出的方法列表，就是 IDE 通过反射（或类似的字节码分析）读取了 <code>Class</code> 对象中的方法信息。
+    </p>
+
+    <!-- ==================== 完整综合示例 ==================== -->
+
+    <h2>综合实战：通用 JSON 序列化器</h2>
+    <p>让我们把反射知识揉进一个实用工具：一个把任意 Java 对象转成 JSON 字符串的迷你序列化器：</p>
+
+    <pre><code>import java.lang.reflect.Field;
+
+public class SimpleJsonSerializer {
+
+    public static String toJson(Object obj) throws Exception {
+        if (obj == null) return "null";
+
+        Class&lt;?&gt; clazz = obj.getClass();
+        StringBuilder json = new StringBuilder("{");
+
+        Field[] fields = clazz.getDeclaredFields();
+        boolean first = true;
+
+        for (Field field : fields) {
+            field.setAccessible(true);   // 即使 private 也能读
+
+            if (!first) json.append(", ");
+            first = false;
+
+            json.append("\"").append(field.getName()).append("\":");
+
+            Object value = field.get(obj);
+            if (value instanceof String) {
+                // 字符串加引号
+                json.append("\"").append(value).append("\"");
+            } else if (value instanceof Number || value instanceof Boolean) {
+                json.append(value);
+            } else {
+                json.append("\"").append(value).append("\"");
+            }
+        }
+
+        json.append("}");
+        return json.toString();
+    }
+
+    // ── 测试 ──
+    public static void main(String[] args) throws Exception {
+        Person p = new Person();
+        p.name = "张三";   // public 字段
+        // 用反射注入 private 字段
+        Field ageField = Person.class.getDeclaredField("age");
+        ageField.setAccessible(true);
+        ageField.set(p, 30);
+
+        System.out.println(toJson(p));
+        // 输出：{"name":"张三", "age":30, "email":"null"}
+    }
+}</code></pre>
+
+    <p>
+      这个 30 行的序列化器展示了反射的核心威力：<strong>在不知道类结构的情况下，遍历并读取所有字段的值</strong>。
+      真正的 Jackson/Gson 比这复杂得多（处理嵌套对象、数组、日期格式化、循环引用等），但原理是一样的——反射是它们的根。
+    </p>
+
+    <!-- ==================== 反射 vs 直接调用 ==================== -->
+
+    <h2>反射与直接调用：对比总结</h2>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left; padding:8px 0;">对比维度</th>
+        <th style="text-align:left; padding:8px 0;">直接调用</th>
+        <th style="text-align:left; padding:8px 0;">反射调用</th>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">类型安全</td>
+        <td style="padding:8px 0;">编译期检查，类型错误立刻发现</td>
+        <td style="padding:8px 0;">运行时才报错，类型错误可能在线才发现</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">性能</td>
+        <td style="padding:8px 0;">最快（JIT 充分优化）</td>
+        <td style="padding:8px 0;">慢 2~10 倍（装箱、数组包装、访问检查）</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">代码可读性</td>
+        <td style="padding:8px 0;">清晰直观</td>
+        <td style="padding:8px 0;">冗长，大量 try-catch</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">灵活性</td>
+        <td style="padding:8px 0;">低，代码在编译期固定</td>
+        <td style="padding:8px 0;">极高，运行时动态决定操作</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">封装性</td>
+        <td style="padding:8px 0;">遵守访问控制</td>
+        <td style="padding:8px 0;">可绕过 private（setAccessible）</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">适合场景</td>
+        <td style="padding:8px 0;">日常业务代码</td>
+        <td style="padding:8px 0;">框架、工具、中间件</td>
+      </tr>
+    </table>
+
+    <!-- ==================== 使用原则 ==================== -->
+
+    <h2>反射的使用原则</h2>
+    <p>反射是一把双刃剑，以下是几条铁律：</p>
+
+    <ol>
+      <li>
+        <strong>能用直接调用就不用反射</strong>——如果你在编译期就知道要操作哪个类，直接用 <code>new</code> 和点号。
+        反射是为"在编译期不知道类名和方法名"的场景准备的。
+      </li>
+      <li>
+        <strong>缓存反射对象</strong>——<code>Class.forName()</code>、<code>getMethod()</code>、<code>getField()</code>
+        这些查找操作不算便宜。如果同一个 Method 要调用多次，把它存到 <code>static final</code> 字段里。
+      </li>
+      <li>
+        <strong><code>setAccessible(true)</code> 三思而行</strong>——它打破封装，说明你在做"非常规操作"。
+        如果是写框架，这是合理的；如果是写业务代码访问同事写的 private 字段，应该停下来想想是否有更好的设计。
+      </li>
+      <li>
+        <strong>处理好异常</strong>——反射 API 抛出大量的受检异常（<code>ClassNotFoundException</code>、
+        <code>NoSuchMethodException</code>、<code>IllegalAccessException</code>、<code>InvocationTargetException</code> 等），
+        不要简单地 <code>e.printStackTrace()</code>，至少给出有意义的错误提示。
+      </li>
+      <li>
+        <strong>注意模块化限制</strong>——Java 9 引入的模块系统（JPMS）对反射施加了更严格的限制。
+        如果你的代码运行在模块路径上，需要在 <code>module-info.java</code> 中显式 <code>opens</code> 包，或者使用
+        <code>--add-opens</code> JVM 参数。
+      </li>
+    </ol>
+
+    <!-- ==================== 小结 ==================== -->
+
+    <h2>小结</h2>
+    <p>今天我们系统学习了 Java 反射机制的两大核心能力——运行时探查和动态操作：</p>
+
+    <ul>
+      <li><strong>反射的本质</strong>：在运行时获取类的内部结构并动态操作，让 Java 从"静态"走向"动态"。</li>
+      <li><strong>Class 对象</strong>：一切的起点。三种获取方式——<code>.class</code>、<code>getClass()</code>、<code>Class.forName()</code>，后者最灵活。</li>
+      <li><strong>运行时探查</strong>：通过 <code>getConstructors()</code> / <code>getFields()</code> / <code>getMethods()</code> 及其 Declared 变体，检索类的构造器、字段、方法。</li>
+      <li><strong>动态操作</strong>：<code>newInstance()</code> 创建对象，<code>field.set()/get()</code> 读写字段，<code>method.invoke()</code> 调用方法。</li>
+      <li><strong>setAccessible</strong>：反射的"万能钥匙"，可以突破私有访问限制——强大但需要三思。</li>
+      <li><strong>实际价值</strong>：Spring、MyBatis、JUnit 等几乎所有主流框架都建立在反射之上。学好反射，你才能真正理解这些框架为何能"自动"工作。</li>
+    </ul>
+
+    <p>
+      反射是 Java 进阶之路上的分水岭——学会它之前，你写的是"应用"；学会它之后，你可以写"框架"。
+      下次当你看到 <code>@Autowired</code> 自动注入了一个对象、或者 <code>@Test</code> 让一个方法自动执行时，
+      心里会清楚：在那背后，是反射在默默运作。
+    </p>
+
+    <a href="index.html" class="back">&larr; 返回首页</a>
+  </article>
+</main>
+
+<footer>
+  用纸笔写代码，用耐心学 Java
+</footer>
+
+</body>
+</html>

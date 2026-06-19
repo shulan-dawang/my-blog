@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>匿名内部类 — Java 学习笔记</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #2c2c2c;
+      --muted: #888;
+      --accent: #b14623;
+      --border: #e8e8e8;
+      --code-bg: #f6f6f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    header {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header h1 a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+
+    article h1 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    article .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+    }
+
+    article h2 {
+      font-size: 1.2rem;
+      margin: 36px 0 10px;
+      color: var(--accent);
+    }
+
+    article h3 {
+      font-size: 1.05rem;
+      margin: 28px 0 8px;
+      color: #555;
+    }
+
+    article p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    article ul, article ol {
+      margin-bottom: 14px;
+      padding-left: 22px;
+    }
+
+    article li { margin-bottom: 4px; }
+
+    article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    article code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
+        "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    article p code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 32px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 16px 48px; }
+      header { padding: 28px 0 20px; margin-bottom: 24px; }
+      header h1 { font-size: 1.5rem; }
+      article h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><a href="index.html">Java 学习笔记</a></h1>
+  <p>记录每一段成长 · 从 Hello World 开始</p>
+</header>
+
+<main>
+  <article>
+    <h1>匿名内部类</h1>
+    <p class="meta">2026 年 6 月 19 日</p>
+
+    <p>
+      在 Java 中，有些类你只会用一次——比如一个按钮的点击处理器、一个临时的比较规则、或者一个简单的线程任务。
+      为这些"一次性"的用途去单独定义一个类，像是在为一次性筷子专门建个工厂。<strong>匿名内部类（Anonymous Inner Class）</strong>
+      就是为这种场景设计的：在需要的地方就地创建、就地使用，用完即弃。
+    </p>
+
+    <!-- ==================== 什么是匿名内部类 ==================== -->
+
+    <h2>匿名内部类是什么？</h2>
+    <p>
+      匿名内部类是 Java 中一种特殊的局部内部类，它<strong>没有名字</strong>，在创建对象的同时完成类的定义。
+      本质上，它是一个"一次性"的子类或接口实现——定义完立刻实例化，之后再也无法被引用。
+    </p>
+
+    <h3>基本语法</h3>
+    <pre><code>// 格式：
+// new 父类/接口() {
+//     // 在这里写类的定义（字段、方法、代码块）
+// };
+
+// 一个最简单的例子：实现 Runnable 接口
+Runnable task = new Runnable() {
+    @Override
+    public void run() {
+        System.out.println("我是匿名内部类！");
+    }
+};
+task.run();  // 输出：我是匿名内部类！</code></pre>
+
+    <p>三行代码就完成了"定义类 + 创建对象"——如果用传统的 named class，你得先定义一个 <code>class MyRunnable implements Runnable</code>，文件多一个，心智负担多一层。</p>
+
+    <h3>关键特性</h3>
+    <ul>
+      <li><strong>没有名字</strong>——不能在别处通过类名引用它或创建更多实例。</li>
+      <li><strong>同时定义和实例化</strong>——<code>new 接口() { ... }</code> 一气呵成。</li>
+      <li><strong>只能继承一个父类或实现一个接口</strong>——匿名类不能同时 <code>extends</code> 又 <code>implements</code>。</li>
+      <li><strong>可以访问外部类的成员</strong>——包括外部类的 private 字段和方法。</li>
+      <li><strong>可以捕获局部变量</strong>——但只能捕获 <code>final</code> 或"事实上的 final"变量（Java 8+）。</li>
+    </ul>
+
+    <!-- ==================== 核心使用场景 ==================== -->
+
+    <h2>六大核心使用场景</h2>
+    <p>匿名内部类不是语法糖，它解决的是真实的工程问题。以下六大场景覆盖了日常开发中 90% 的匿名内部类使用：</p>
+
+    <!-- 场景一 -->
+    <h3>场景一：事件监听与回调</h3>
+    <p>GUI 编程中最经典的用法——每个按钮、每个菜单项都需要一个事件处理器：</p>
+
+    <pre><code>// Swing / Android 中的按钮点击
+button.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        System.out.println("按钮被点击了！");
+        // 处理点击逻辑...
+    }
+});
+
+// 文件变更监听
+watchService.register(new WatchEvent.Kind<?>[]{StandardWatchEventKinds.ENTRY_MODIFY},
+    new WatchHandler() {
+        @Override
+        public void handle(WatchEvent<?> event) {
+            System.out.println("文件发生了变化：" + event.context());
+        }
+    });</code></pre>
+
+    <p>
+      在这种场景下，事件处理器通常只绑定一个控件，用匿名内部类既简洁又能直接访问外部类的成员（比如更新 UI 状态）。
+    </p>
+
+    <!-- 场景二 -->
+    <h3>场景二：快速创建线程</h3>
+    <p>当线程逻辑简单且不需要复用时，就地实现 <code>Runnable</code> 或 <code>Callable</code> 是最高效的做法：</p>
+
+    <pre><code>// 后台线程执行耗时任务
+new Thread(new Runnable() {
+    @Override
+    public void run() {
+        // 执行文件下载
+        downloadFile("https://example.com/large-file.zip");
+        System.out.println("下载完成！");
+    }
+}).start();
+
+// 带返回值的 Callable
+Future&lt;Integer&gt; future = executor.submit(new Callable&lt;Integer&gt;() {
+    @Override
+    public Integer call() throws Exception {
+        return computeHash("data.txt");
+    }
+});</code></pre>
+
+    <!-- 场景三 -->
+    <h3>场景三：临时排序 / 比较规则</h3>
+    <p>对列表排序时，<code>Comparator</code> 往往是"一次性"的比较规则：</p>
+
+    <pre><code>List&lt;String&gt; names = Arrays.asList("张三", "李四", "王五", "赵六");
+
+// 按字符串长度排序
+Collections.sort(names, new Comparator&lt;String&gt;() {
+    @Override
+    public int compare(String s1, String s2) {
+        return s1.length() - s2.length();
+    }
+});
+
+// 按姓名拼音排序
+names.sort(new Comparator&lt;String&gt;() {
+    @Override
+    public int compare(String s1, String s2) {
+        return Collator.getInstance(Locale.CHINESE).compare(s1, s2);
+    }
+});</code></pre>
+
+    <p>这种用法在 Java 8 之前是标准做法，现在可以用 Lambda 替代（后面会对比），但理解匿名内部类才能理解 Lambda 的"前身"。</p>
+
+    <!-- 场景四 -->
+    <h3>场景四：模板方法中的"钩子"</h3>
+    <p>一些工具类提供了"模板方法"，允许你通过传入实现来定制部分行为：</p>
+
+    <pre><code>// 遍历文件夹时，对每个文件执行自定义操作
+FileUtils.traverse("C:\\projects", new FileHandler() {
+    @Override
+    public void onFile(File file) {
+        if (file.getName().endsWith(".java")) {
+            System.out.println("发现 Java 文件：" + file.getName());
+        }
+    }
+
+    @Override
+    public void onDirectory(File dir) {
+        System.out.println("进入目录：" + dir.getName());
+    }
+});</code></pre>
+
+    <!-- 场景五 -->
+    <h3>场景五：单元测试中的 Stub / Mock</h3>
+    <p>写测试时，经常需要快速构造一个接口的"假实现"来隔离被测对象：</p>
+
+    <pre><code>// Mock 一个数据源，返回固定数据
+UserService userService = new UserService(new UserRepository() {
+    @Override
+    public User findById(int id) {
+        // 不查数据库，直接返回假数据
+        return new User(id, "测试用户", "test@example.com");
+    }
+
+    @Override
+    public List&lt;User&gt; findAll() {
+        return Arrays.asList(
+            new User(1, "张三", "zhangsan@test.com"),
+            new User(2, "李四", "lisi@test.com")
+        );
+    }
+});
+
+// 验证 userService 的行为
+User result = userService.getUser(1);
+assertEquals("测试用户", result.getName());</code></pre>
+
+    <!-- 场景六 -->
+    <h3>场景六：一次性过滤 / 验证规则</h3>
+
+    <pre><code>// 过滤集合
+List&lt;Integer&gt; numbers = Arrays.asList(1, 2, 3, 4, 5, 6);
+numbers.removeIf(new Predicate&lt;Integer&gt;() {
+    @Override
+    public boolean test(Integer n) {
+        return n % 2 == 0;  // 删除所有偶数
+    }
+});
+// numbers 现在是 [1, 3, 5]</code></pre>
+
+    <!-- ==================== 计时实战 ==================== -->
+
+    <h2>实战核心：用匿名内部类计算方法的执行时间</h2>
+
+    <p>
+      这是一个在日常开发中非常实用的模式——<strong>用一个匿名内部类封装"要执行的代码块"，然后在外部计时</strong>。
+      它体现了匿名内部类的核心设计思想：<strong>将行为（要做什么）和基础设施（计时、日志、事务等）分离</strong>。
+    </p>
+
+    <h3>版本一：定义时间计算器</h3>
+    <p>首先，我们设计一个"可计时执行的代码块"的契约：</p>
+
+    <pre><code>/**
+ * 一个可以被计时执行的代码块。
+ * 调用者只需实现 execute()，时间计算由外部框架完成。
+ */
+interface TimedTask {
+    void execute();  // 要执行的业务逻辑
+}</code></pre>
+
+    <p>然后写一个通用的计时工具：</p>
+
+    <pre><code>public class Timer {
+
+    /**
+     * 执行任务并计算耗时（秒）。
+     *
+     * @param task 要执行的代码块（匿名内部类）
+     * @return 耗时，单位秒
+     */
+    public static double run(TimedTask task) {
+        long start = System.currentTimeMillis();  // 记录开始时间
+
+        task.execute();  // ← 执行真正的业务逻辑
+
+        long end = System.currentTimeMillis();    // 记录结束时间
+        return (end - start) / 1000.0;           // 返回秒数
+    }
+}</code></pre>
+
+    <p>使用时，只需用匿名内部类传入"要执行的代码"：</p>
+
+    <pre><code>public class Demo {
+    public static void main(String[] args) {
+
+        // ── 测试：计算一段耗时操作的执行时间 ──
+        double seconds = Timer.run(new TimedTask() {
+            @Override
+            public void execute() {
+                // ===== 这里写你要测试的代码 =====
+                long sum = 0;
+                for (int i = 0; i < 100_000_000; i++) {
+                    sum += i;
+                }
+                System.out.println("计算结果：" + sum);
+                // =============================
+            }
+        });
+
+        System.out.printf("执行耗时：%.3f 秒\n", seconds);
+    }
+}</code></pre>
+
+    <p>输出示例：</p>
+    <pre><code>计算结果：4999999950000000
+执行耗时：0.035 秒</code></pre>
+
+    <p>这 4 行调用代码就是匿名内部类发挥威力的地方——<strong>你要测试的逻辑用匿名类就地写出来，计时逻辑由 <code>Timer.run()</code> 统一处理</strong>。
+    修改要测试的代码时，只改匿名类的内容；要改进计时精度（比如改用 <code>System.nanoTime()</code>），只需改 <code>Timer</code> 一个地方。</p>
+
+    <h3>版本二：带参数和返回值</h3>
+    <p>
+      上面的版本不能传参也不能返回值，实际业务中经常遇到"输入一个参数，返回一个结果"的场景。
+      我们用泛型做一个更通用的版本：
+    </p>
+
+    <pre><code>/**
+ * 带输入和输出的可计时代码块。
+ * @param &lt;T&gt; 输入类型
+ * @param &lt;R&gt; 输出类型
+ */
+interface TimedFunction&lt;T, R&gt; {
+    R execute(T input);
+}</code></pre>
+
+    <pre><code>public class Timer {
+
+    /**
+     * 执行并计时（带输入输出）。
+     *
+     * @param func  要执行的代码块
+     * @param input 输入参数
+     * @return 包含耗时和执行结果的容器
+     */
+    public static &lt;T, R&gt; TimedResult&lt;R&gt; run(TimedFunction&lt;T, R&gt; func, T input) {
+        long start = System.nanoTime();  // 用 nanoTime 更精确
+
+        R result = func.execute(input);  // 执行业务逻辑
+
+        long end = System.nanoTime();
+        double seconds = (end - start) / 1_000_000_000.0;
+
+        return new TimedResult&lt;&gt;(result, seconds);
+    }
+
+    // ── 结果容器 ──
+    public static class TimedResult&lt;R&gt; {
+        public final R result;
+        public final double seconds;
+
+        public TimedResult(R result, double seconds) {
+            this.result = result;
+            this.seconds = seconds;
+        }
+    }
+}</code></pre>
+
+    <p>实际使用——比较三种算法的性能：</p>
+
+    <pre><code>public class AlgoBenchmark {
+    public static void main(String[] args) {
+        final int n = 50;
+
+        // ── 测试递归实现 ──
+        TimedResult&lt;Long&gt; r1 = Timer.run(
+            new TimedFunction&lt;Integer, Long&gt;() {
+                @Override
+                public Long execute(Integer input) {
+                    return fibRecursive(input);
+                }
+            }, n);
+        System.out.printf("递归法  ：fib(%d) = %d，耗时 %.6f 秒\n",
+                          n, r1.result, r1.seconds);
+
+        // ── 测试循环实现 ──
+        TimedResult&lt;Long&gt; r2 = Timer.run(
+            new TimedFunction&lt;Integer, Long&gt;() {
+                @Override
+                public Long execute(Integer input) {
+                    return fibLoop(input);
+                }
+            }, n);
+        System.out.printf("循环法  ：fib(%d) = %d，耗时 %.6f 秒\n",
+                          n, r2.result, r2.seconds);
+
+        // ── 测试记忆化递归 ──
+        TimedResult&lt;Long&gt; r3 = Timer.run(
+            new TimedFunction&lt;Integer, Long&gt;() {
+                @Override
+                public Long execute(Integer input) {
+                    return fibMemo(input, new HashMap<>());
+                }
+            }, n);
+        System.out.printf("记忆法  ：fib(%d) = %d，耗时 %.6f 秒\n",
+                          n, r3.result, r3.seconds);
+    }
+
+    // 普通递归（O(2^n)）
+    static long fibRecursive(int n) {
+        if (n <= 1) return n;
+        return fibRecursive(n - 1) + fibRecursive(n - 2);
+    }
+
+    // 循环迭代（O(n)）
+    static long fibLoop(int n) {
+        if (n <= 1) return n;
+        long a = 0, b = 1;
+        for (int i = 2; i <= n; i++) {
+            long c = a + b;
+            a = b;
+            b = c;
+        }
+        return b;
+    }
+
+    // 记忆化递归（O(n)）
+    static long fibMemo(int n, Map&lt;Integer, Long&gt; memo) {
+        if (n <= 1) return n;
+        if (memo.containsKey(n)) return memo.get(n);
+        long val = fibMemo(n - 1, memo) + fibMemo(n - 2, memo);
+        memo.put(n, val);
+        return val;
+    }
+}</code></pre>
+
+    <p>输出对比：</p>
+    <pre><code>递归法  ：fib(50) = 12586269025，耗时 38.214563 秒
+循环法  ：fib(50) = 12586269025，耗时 0.000021 秒
+记忆法  ：fib(50) = 12586269025，耗时 0.000412 秒</code></pre>
+
+    <p>
+      三种算法一行行对比，计时逻辑完全复用——这就是用匿名内部类封装"要执行的代码块"带来的<strong>关注点分离</strong>。
+      算法的代码只管"怎么算"，<code>Timer</code> 只管"花了多久"。
+    </p>
+
+    <h3>版本三：支持多次运行取平均值</h3>
+    <p>更进一步——同一个任务跑多次，取平均时间，排除 JVM 预热的影响：</p>
+
+    <pre><code>public class Timer {
+
+    /**
+     * 多次执行并计算平均耗时。
+     *
+     * @param task  要测试的代码块
+     * @param warmupRounds 预热轮数（不计入统计）
+     * @param testRounds   正式测试轮数
+     * @return 各轮耗时及平均耗时
+     */
+    public static BenchmarkResult benchmark(TimedTask task,
+                                             int warmupRounds,
+                                             int testRounds) {
+        // ── 预热阶段（不计时） ──
+        for (int i = 0; i < warmupRounds; i++) {
+            task.execute();
+        }
+
+        // ── 正式测量 ──
+        double[] times = new double[testRounds];
+        double total = 0;
+        for (int i = 0; i < testRounds; i++) {
+            long start = System.nanoTime();
+            task.execute();
+            long end = System.nanoTime();
+            times[i] = (end - start) / 1_000_000_000.0;
+            total += times[i];
+        }
+
+        return new BenchmarkResult(times, total / testRounds);
+    }
+
+    public static class BenchmarkResult {
+        public final double[] eachRound;  // 每轮耗时（秒）
+        public final double average;     // 平均耗时（秒）
+
+        public BenchmarkResult(double[] eachRound, double average) {
+            this.eachRound = eachRound;
+            this.average = average;
+        }
+    }
+}</code></pre>
+
+    <p>使用：</p>
+
+    <pre><code>BenchmarkResult result = Timer.benchmark(new TimedTask() {
+    @Override
+    public void execute() {
+        // 测试 StringBuilder vs StringBuffer
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 100_000; i++) {
+            sb.append("hello");
+        }
+    }
+}, 3, 10);  // 预热 3 轮，正式测试 10 轮
+
+System.out.printf("平均耗时：%.6f 秒\n", result.average);
+// 输出各轮明细
+for (int i = 0; i < result.eachRound.length; i++) {
+    System.out.printf("第 %d 轮：%.6f 秒\n", i + 1, result.eachRound[i]);
+}</code></pre>
+
+    <!-- ==================== 计时模式的设计思想 ==================== -->
+
+    <h2>从计时器看匿名内部类的设计思想</h2>
+    <p>这个计时器的例子不止教会了你"怎么计时"——它体现了一个更重要的设计原则：</p>
+
+    <ol>
+      <li>
+        <strong>定义契约</strong>：<code>TimedTask</code> 接口只定义一个 <code>execute()</code> 方法，清晰表达"这是一个可被执行的代码块"。
+      </li>
+      <li>
+        <strong>匿名实现</strong>：每次测试算法时，就地创建一个匿名内部类实现 <code>execute()</code>，把"要测试的代码"写进去。
+      </li>
+      <li>
+        <strong>外部框架接手</strong>：<code>Timer.run()</code> 负责计时、预热、统计——这些横切关注点和业务逻辑完全分离。
+      </li>
+    </ol>
+
+    <p>
+      这个模式就是<strong>模板方法模式（Template Method）</strong>的匿名内部类版本——<code>Timer</code> 定义了执行流程（记录开始 → 执行业务 → 记录结束 → 计算耗时），
+      其中"业务"这一步由匿名内部类填充。对比传统的模板方法（需要继承），匿名类版本更轻量、更灵活。
+    </p>
+
+    <!-- ==================== 匿名内部类 vs Lambda ==================== -->
+
+    <h2>匿名内部类 vs Lambda：什么时候用哪个？</h2>
+    <p>Java 8 引入 Lambda 后，很多匿名内部类的场景可以用更简洁的语法替代。但两者并不完全等价：</p>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left; padding:8px 0;">对比维度</th>
+        <th style="text-align:left; padding:8px 0;">匿名内部类</th>
+        <th style="text-align:left; padding:8px 0;">Lambda 表达式</th>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">适用接口</td>
+        <td style="padding:8px 0;">任意接口（多方法也行）</td>
+        <td style="padding:8px 0;">仅函数式接口（只有一个抽象方法）</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">能否有自己的字段</td>
+        <td style="padding:8px 0;">可以</td>
+        <td style="padding:8px 0;">不可以（只是方法实现）</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">能否初始化块</td>
+        <td style="padding:8px 0;">可以</td>
+        <td style="padding:8px 0;">不可以</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">this 指向</td>
+        <td style="padding:8px 0;">匿名内部类实例本身</td>
+        <td style="padding:8px 0;">外部类实例</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">语法长度</td>
+        <td style="padding:8px 0;">较冗长</td>
+        <td style="padding:8px 0;">极简</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">编译产物</td>
+        <td style="padding:8px 0;">生成独立的 .class 文件（如 Outer$1.class）</td>
+        <td style="padding:8px 0;">不生成 .class，由 invokedynamic 实现</td>
+      </tr>
+    </table>
+
+    <p>用 Lambda 重写前面的计时器调用：</p>
+
+    <pre><code>// 匿名内部类写法（Java 7 以前）
+Timer.run(new TimedTask() {
+    @Override
+    public void execute() {
+        doSomething();
+    }
+});
+
+// Lambda 写法（Java 8+，前提是 TimedTask 是函数式接口）
+Timer.run(() -> doSomething());</code></pre>
+
+    <p><strong>一条简单的判断规则：</strong></p>
+    <ul>
+      <li>接口只有一个抽象方法 → <strong>用 Lambda</strong>，更简洁。</li>
+      <li>接口有多个抽象方法 → <strong>用匿名内部类</strong>，Lambda 做不到。</li>
+      <li>需要在实现类中加字段、初始化块 → <strong>用匿名内部类</strong>。</li>
+      <li>需要用到自身的 <code>this</code>（比如把自己注册为监听器） → <strong>用匿名内部类</strong>。</li>
+    </ul>
+
+    <!-- ==================== 注意事项 ==================== -->
+
+    <h2>使用匿名内部类的注意事项</h2>
+
+    <h3>1. 变量捕获的限制</h3>
+    <p>匿名内部类可以访问外部方法的局部变量，但前提是变量必须是 <code>final</code> 或"事实上的 final"（赋值后不再改变）：</p>
+
+    <pre><code>// ✅ 正确 —— message 只赋值了一次
+String message = "Hello";
+new Thread(new Runnable() {
+    @Override
+    public void run() {
+        System.out.println(message);  // OK
+    }
+}).start();
+
+// ❌ 错误 —— count 在赋值后又改变了
+int count = 0;
+count++;  // 这一行让 count 不再是"事实上的 final"
+new Thread(new Runnable() {
+    @Override
+    public void run() {
+        System.out.println(count);  // 编译错误！
+    }
+}).start();</code></pre>
+
+    <p>解决方案：用一个数组或可变容器包装变量，绕过变量本身不能变的限制（但不推荐——这破坏了不可变性的意图）。</p>
+
+    <h3>2. 内存泄漏风险</h3>
+    <p>匿名内部类会隐式持有外部类实例的引用。如果匿名内部类的生命周期比外部类长（比如被提交到线程池长时间运行），外部类就不能被 GC 回收，造成内存泄漏。</p>
+
+    <pre><code>public class LeakyClass {
+
+    private byte[] bigData = new byte[100 * 1024 * 1024]; // 100MB
+
+    void startTask() {
+        // 这个匿名内部类持有 LeakyClass.this 引用
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                // 长时间运行的任务...
+                processData(bigData);
+            }
+        });
+    }
+    // 即使 LeakyClass 的外部引用没了，bigData 也释放不掉
+    // ——因为匿名内部类还抓着外部类的引用
+}</code></pre>
+
+    <p>如果匿名类不需要访问外部实例成员，可以定义为 <strong>静态内部类</strong> 或使用 Lambda（Lambda 不持有 <code>this</code> 引用，除非在 Lambda 体内访问了外部实例成员）。</p>
+
+    <h3>3. 不宜过度使用</h3>
+    <p>如果匿名内部类的代码超过 20 行，或者相同的逻辑要在多处复用，就应该把它<strong>提升为独立的命名类</strong>。匿名类的设计初衷就是"一次性、短小、就地使用"——太长会严重损害可读性。</p>
+
+    <!-- ==================== 小结 ==================== -->
+
+    <h2>小结</h2>
+    <p>今天我们系统学习了匿名内部类的使用场景，并通过"计算方法执行时间"这一实战案例深入理解其设计思想：</p>
+
+    <ul>
+      <li><strong>匿名内部类是什么</strong>：没有名字的局部内部类，在创建对象的同时完成类的定义。"定义 + 实例化"一步到位。</li>
+      <li><strong>六大场景</strong>：事件监听、线程创建、临时比较规则、模板方法钩子、测试 Stub/Mock、一次性过滤规则。</li>
+      <li><strong>计时实战</strong>：通过 <code>TimedTask</code> 接口 + 匿名内部类，将"要执行的代码"和"计时基础设施"彻底分离，体现了模板方法模式的设计思想。</li>
+      <li><strong>演进路径</strong>：从无参无返回 → 带参带返回（泛型） → 多次运行取平均（预热机制），逐步构建一个实用的性能测试小工具。</li>
+      <li><strong>匿名内部类 vs Lambda</strong>：单抽象方法用 Lambda，多方法或有状态需求用匿名内部类。</li>
+      <li><strong>注意事项</strong>：变量捕获的 final 限制、内存泄漏风险、不宜过度使用。</li>
+    </ul>
+
+    <p>
+      匿名内部类是 Java 中"轻量级模板方法模式"的实现手段。下次当你需要"给一个方法传入一段可执行逻辑"时——
+      不是说传一个数据，而是传<strong>一段代码</strong>——匿名内部类就是为此而生的。
+    </p>
+
+    <a href="index.html" class="back">&larr; 返回首页</a>
+  </article>
+</main>
+
+<footer>
+  用纸笔写代码，用耐心学 Java
+</footer>
+
+</body>
+</html>
