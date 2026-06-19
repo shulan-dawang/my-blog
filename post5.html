@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>如何快速找到素数 — Java 学习笔记</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #2c2c2c;
+      --muted: #888;
+      --accent: #b14623;
+      --border: #e8e8e8;
+      --code-bg: #f6f6f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    header {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header h1 a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+
+    article h1 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    article .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+    }
+
+    article h2 {
+      font-size: 1.2rem;
+      margin: 36px 0 10px;
+      color: var(--accent);
+    }
+
+    article p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    article ul, article ol {
+      margin-bottom: 14px;
+      padding-left: 22px;
+    }
+
+    article li { margin-bottom: 4px; }
+
+    article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    article code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
+        "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    article p code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 32px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 16px 48px; }
+      header { padding: 28px 0 20px; margin-bottom: 24px; }
+      header h1 { font-size: 1.5rem; }
+      article h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><a href="index.html">Java 学习笔记</a></h1>
+  <p>记录每一段成长 · 从 Hello World 开始</p>
+</header>
+
+<main>
+  <article>
+    <h1>如何快速找到素数</h1>
+    <p class="meta">2026 年 6 月 19 日</p>
+
+    <p>
+      素数（也叫质数）是数学中的基本概念——<strong>一个大于 1 的自然数，如果除了 1 和它本身之外没有其他因数，它就是素数。</strong>
+      比如 2、3、5、7、11、13 都是素数，而 4（2×2）、6（2×3）、8（2×4）不是。
+    </p>
+    <p>
+      判断一个数是不是素数，看起来简单，但当数字变大、数量变多时，能不能<strong>快速</strong>找到素数就变成一个经典的算法问题了。
+      这篇文章从最朴素的方法讲起，一步步优化，最终引出<strong>埃拉托斯特尼筛法</strong>——素数筛选领域最优雅的经典算法。
+    </p>
+
+    <!-- ==================== 朴素方法 ==================== -->
+
+    <h2>方法一：暴力试除</h2>
+    <p>最直观的思路：对于一个数 n，从 2 到 n-1 逐个试除，只要有一个能整除，n 就不是素数。</p>
+    <pre><code>public class PrimeCheck {
+    // 判断一个数是否为素数
+    public static boolean isPrime(int n) {
+        if (n &lt;= 1) return false;          // 1 和更小的数不是素数
+        for (int i = 2; i &lt; n; i++) {
+            if (n % i == 0) return false;  // 找到因数，不是素数
+        }
+        return true;
+    }
+
+    // 打印 1~100 的所有素数
+    public static void main(String[] args) {
+        for (int i = 1; i &lt;= 100; i++) {
+            if (isPrime(i)) {
+                System.out.print(i + " ");
+            }
+        }
+    }
+}</code></pre>
+    <p>
+      运行结果：<code>2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97</code>
+    </p>
+    <p>
+      这个方法正确，但效率低。对于每个数 n，最多要试除 n-2 次。如果要找出 1~N 的所有素数，时间复杂度是 <strong>O(N²)</strong>。
+      当 N 达到 10⁶ 级别，计算量就是万亿级别，根本不现实。
+    </p>
+
+    <!-- ==================== sqrt 优化 ==================== -->
+
+    <h2>方法二：只试除到 √n</h2>
+    <p>第一个重要的优化来自一个简单的数学观察：</p>
+    <p>
+      <strong>如果 n 不是素数，那么它一定有一个小于等于 √n 的因数。</strong>
+    </p>
+    <p>为什么？假设 n = a × b，如果 a 和 b 都大于 √n，那么 a × b 就会大于 n——矛盾。所以 a 和 b 中至少有一个 ≤ √n。</p>
+    <p>这意味着我们只需要试除到 √n 就够了：</p>
+    <pre><code>public static boolean isPrime(int n) {
+    if (n &lt;= 1) return false;
+    for (int i = 2; i * i &lt;= n; i++) {  // 等价于 i &lt;= Math.sqrt(n)
+        if (n % i == 0) return false;
+    }
+    return true;
+}</code></pre>
+    <p>
+      时间复杂度降到 <strong>O(N√N)</strong>。比如 n = 10⁶ 时，原来最多试除 10⁶ 次，现在只需要 √(10⁶) = 1000 次。质的飞跃！
+      对于单个数的判断，这个方法已经够用了。
+    </p>
+
+    <h2>方法三：只试除奇数（进一步剪枝）</h2>
+    <p>另一个微优化：除了 2 以外，所有偶数都不是素数。所以可以先判断 2，然后只检查奇数：</p>
+    <pre><code>public static boolean isPrime(int n) {
+    if (n &lt;= 1) return false;
+    if (n == 2) return true;            // 2 是唯一的偶素数
+    if (n % 2 == 0) return false;       // 其他偶数都不是素数
+    for (int i = 3; i * i &lt;= n; i += 2) {  // 只检查奇数
+        if (n % i == 0) return false;
+    }
+    return true;
+}</code></pre>
+    <p>
+      这个优化又砍掉了一半的试除次数。但它的本质还是"逐个判断"，当我们要找<strong>大量</strong>素数时（比如找出 1~10⁷ 内所有素数），
+      我们需要的不是更聪明的逐个判断，而是<strong>换一个思路</strong>。
+    </p>
+
+    <!-- ==================== 埃拉托斯特尼筛法 ==================== -->
+
+    <h2>埃拉托斯特尼筛法：批量生产素数</h2>
+    <p>
+      埃拉托斯特尼筛法（Sieve of Eratosthenes）是公元前 3 世纪由古希腊数学家埃拉托斯特尼发明的。
+      它的核心思想非常巧妙——<strong>与其逐个判断每个数是不是素数，不如把所有合数"筛掉"，剩下的自然就是素数。</strong>
+    </p>
+
+    <h2>算法思路</h2>
+    <p>用一张图来理解：</p>
+    <ol>
+      <li>准备一个数组 <code>isPrime[0..N]</code>，全部初始化为 <code>true</code>（假设所有数都是素数）。</li>
+      <li>把 <code>isPrime[0]</code> 和 <code>isPrime[1]</code> 设为 <code>false</code>（0 和 1 不是素数）。</li>
+      <li>从 2 开始，找到第一个标记为 <code>true</code> 的数 p——它就是素数。</li>
+      <li>把 p 的<strong>所有倍数</strong>（2p、3p、4p…）全部标记为 <code>false</code>，因为倍数一定不是素数。</li>
+      <li>找下一个标记为 <code>true</code> 的数，重复步骤 4，直到 p² &gt; N。</li>
+    </ol>
+    <p>
+      就像用筛子筛沙子：筛孔是"某个素数的倍数"，漏下去的是合数，留在筛子里的就是素数。
+    </p>
+
+    <h2>Java 实现</h2>
+    <pre><code>public class SieveOfEratosthenes {
+
+    // 返回 1~N 的所有素数
+    public static List&lt;Integer&gt; sieve(int n) {
+        boolean[] isPrime = new boolean[n + 1];
+        Arrays.fill(isPrime, true);   // 初始化：全标记为素数
+        isPrime[0] = isPrime[1] = false;
+
+        for (int p = 2; p * p &lt;= n; p++) {
+            if (isPrime[p]) {         // p 是素数
+                // 把 p 的所有倍数标记为合数
+                for (int multiple = p * p; multiple &lt;= n; multiple += p) {
+                    isPrime[multiple] = false;
+                }
+            }
+        }
+
+        // 收集结果
+        List&lt;Integer&gt; primes = new ArrayList&lt;&gt;();
+        for (int i = 2; i &lt;= n; i++) {
+            if (isPrime[i]) primes.add(i);
+        }
+        return primes;
+    }
+
+    public static void main(String[] args) {
+        List&lt;Integer&gt; primes = sieve(100);
+        System.out.println("1~100 的素数共 " + primes.size() + " 个：");
+        System.out.println(primes);
+    }
+}</code></pre>
+    <p>
+      输出：<code>1~100 的素数共 25 个：[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]</code>
+    </p>
+
+    <h2>关键优化细节</h2>
+    <p>代码中有两个值得注意的细节：</p>
+    <ul>
+      <li>
+        <strong>外层循环到 √n 就停止</strong>：<code>p * p &lt;= n</code>。因为如果 n 是合数，它一定有一个 ≤ √n 的质因数，
+        所以当 p 超过 √n 时，所有合数都已经被筛掉了。
+      </li>
+      <li>
+        <strong>内层循环从 p² 开始</strong>：<code>int multiple = p * p</code>。
+        这是因为小于 p² 的 p 的倍数（2p、3p…(p-1)p）在之前的轮次中，已经被更小的素数筛过了。
+        比如筛 5 时，5×2 已被 2 筛过，5×3 已被 3 筛过，直接从 5×5 = 25 开始就行。
+      </li>
+    </ul>
+
+    <!-- ==================== 时间复杂度分析 ==================== -->
+
+    <h2>时间复杂度分析</h2>
+    <p>
+      筛法的内层循环执行次数近似为 N/2 + N/3 + N/5 + N/7 + … = N × (1/2 + 1/3 + 1/5 + 1/7 + …)。
+      这个调和级数部分约等于 <strong>log log N</strong>（是的，双重 log！），所以总时间复杂度是 <strong>O(N log log N)</strong>。
+    </p>
+    <p>这意味着筛 100 万个数的开销只比筛 10 万个数多 15 倍左右，而不是 100 倍。这个效率对大多数场景来说已经相当好了。</p>
+
+    <h2>性能对比一瞥</h2>
+    <p>一个粗略的实测（找出 1~10⁷ 的所有素数，i7 处理器）：</p>
+    <ul>
+      <li><strong>暴力试除</strong>：很久，久到你可能不想等。</li>
+      <li><strong>试除到 √n</strong>：约几十秒。</li>
+      <li><strong>埃拉托斯特尼筛法</strong>：约 0.2 秒。</li>
+    </ul>
+    <p>从"等不起"到"眨个眼"——这就是算法思想的差距。</p>
+
+    <!-- ==================== 线性筛 ==================== -->
+
+    <h2>进阶：欧拉筛（线性筛）</h2>
+    <p>
+      埃氏筛有一个小缺点：一个合数可能被多次标记。比如 12 会被 2 筛一次，又被 3 筛一次。
+      虽然不影响正确性，但重复标记多少浪费了一些时间。
+    </p>
+    <p>
+      <strong>欧拉筛法</strong>（也叫线性筛）做到了每个合数<strong>只被它的最小质因数筛掉一次</strong>，时间复杂度严格 <strong>O(N)</strong>。
+    </p>
+    <pre><code>public class LinearSieve {
+
+    public static List&lt;Integer&gt; sieve(int n) {
+        boolean[] isComposite = new boolean[n + 1];
+        List&lt;Integer&gt; primes = new ArrayList&lt;&gt;();
+
+        for (int i = 2; i &lt;= n; i++) {
+            if (!isComposite[i]) {
+                primes.add(i);  // i 是素数
+            }
+            // 用已收集的素数筛掉合数
+            for (int j = 0; j &lt; primes.size(); j++) {
+                int p = primes.get(j);
+                if (i * p &gt; n) break;           // 超出范围
+                isComposite[i * p] = true;      // 筛掉 i * p
+                if (i % p == 0) break;          // ★关键：p 是 i 的最小质因数，停止
+            }
+        }
+        return primes;
+    }
+}</code></pre>
+    <p>
+      核心在于 <code>if (i % p == 0) break;</code> 这一行：
+      当 p 能整除 i 时，p 就是 i 的最小质因数。此时 <code>i * nextPrime</code> 的最小质因数一定是 p（因为它能整除 i），
+      所以这个合数应该由 p 来筛，而不是由 <code>nextPrime</code> 来筛。跳出循环避免重复标记。
+    </p>
+    <p>
+      对于大多数学习场景和实际应用，经典的埃氏筛法已经足够优秀了。欧拉筛作为进阶知识，
+      理解它的"不重复标记"思想比记住代码更重要。
+    </p>
+
+    <!-- ==================== 小结 ==================== -->
+
+    <h2>小结</h2>
+    <p>今天我们从头梳理了"找素数"这个经典问题：</p>
+    <ul>
+      <li><strong>暴力试除</strong>：O(N²)，只适合很小的范围。</li>
+      <li><strong>试除到 √n</strong>：O(N√N)，单个数判断的最佳实践。</li>
+      <li><strong>只试除奇数</strong>：剪枝优化，常数级加速。</li>
+      <li><strong>埃拉托斯特尼筛法</strong>：O(N log log N)，批量找素数的经典算法——换个思路，不判断，只筛选。</li>
+      <li><strong>欧拉线性筛</strong>：O(N)，每个合数只筛一次，理论最优。</li>
+    </ul>
+    <p>
+      这几个方法正好展示了一个算法学习的重要原则：<strong>有时候，最好的优化不是让现有代码更快，而是换一个完全不同的思路。</strong>
+      筛法之所以优雅，不是因为它把试除写得更漂亮，而是因为它根本就不是试除——它用空间换时间，
+      用一个布尔数组把"判断"变成了"标记"。
+    </p>
+    <p>
+      下次当你面对一个需要"找出所有满足条件的数"的问题时，可以想一想：能不能像筛法一样，
+      把"逐个判断"变成"批量筛选"？这个思维转换，比筛法本身更有价值。
+    </p>
+
+    <a href="index.html" class="back">&larr; 返回首页</a>
+  </article>
+</main>
+
+<footer>
+  用纸笔写代码，用耐心学 Java
+</footer>
+
+</body>
+</html>
