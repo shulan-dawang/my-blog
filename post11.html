@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>使用 Thread 子类创建线程 VS 使用 Runnable 接口创建线程的区别 — Java 学习笔记</title>
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #2c2c2c;
+      --muted: #888;
+      --accent: #b14623;
+      --border: #e8e8e8;
+      --code-bg: #f6f6f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    header {
+      padding: 40px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header h1 a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+
+    article h1 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    article .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+    }
+
+    article h2 {
+      font-size: 1.2rem;
+      margin: 36px 0 10px;
+      color: var(--accent);
+    }
+
+    article h3 {
+      font-size: 1.05rem;
+      margin: 28px 0 8px;
+      color: #555;
+    }
+
+    article p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    article ul, article ol {
+      margin-bottom: 14px;
+      padding-left: 22px;
+    }
+
+    article li { margin-bottom: 4px; }
+
+    article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    article code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono",
+        "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    article p code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 32px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 16px 48px; }
+      header { padding: 28px 0 20px; margin-bottom: 24px; }
+      header h1 { font-size: 1.5rem; }
+      article h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><a href="index.html">Java 学习笔记</a></h1>
+  <p>记录每一段成长 · 从 Hello World 开始</p>
+</header>
+
+<main>
+  <article>
+    <h1>使用 Thread 子类创建线程 VS 使用 Runnable 接口创建线程的区别</h1>
+    <p class="meta">2026 年 6 月 26 日</p>
+
+    <p>
+      在 Java 中，创建线程有<strong>两种基本方式</strong>：继承 <code>Thread</code> 类并重写 <code>run()</code> 方法，
+      或者实现 <code>Runnable</code> 接口并将其传递给 <code>Thread</code> 的构造器。两者看起来都能"开一个新线程跑一段代码"，
+      但它们的设计意图、灵活性和实际适用场景有本质区别。本文将对这两种方式做一次系统的对比。
+    </p>
+
+    <!-- ==================== 方式一：继承 Thread ==================== -->
+
+    <h2>方式一：继承 Thread 类</h2>
+
+    <p>最基本的用法——定义一个类继承 <code>Thread</code>，重写 <code>run()</code> 方法，然后调用 <code>start()</code>：</p>
+
+    <pre><code>// 方式一：继承 Thread 类
+class MyThread extends Thread {
+    @Override
+    public void run() {
+        System.out.println("线程 " + getName() + " 正在执行");
+        // 线程要执行的任务
+    }
+}
+
+// 使用
+MyThread t1 = new MyThread();
+t1.start();  // 启动新线程，JVM 会调用 run()</code></pre>
+
+    <p>这种方式直观且代码量少——线程和任务"融为一体"，一个线程就是一个独立的执行单元。</p>
+
+    <h3>继承 Thread 的优点</h3>
+    <ul>
+      <li><strong>编写简单直接</strong>——创建一个子类、重写一个方法即可，适合快速原型。</li>
+      <li><strong>可以直接操作线程的 API</strong>——在 <code>run()</code> 内部，可以直接调用 <code>getName()</code>、<code>getId()</code>、<code>interrupt()</code> 等 Thread 的方法，不需要额外获取当前线程引用。</li>
+      <li><strong>每个实例天然对应一个线程</strong>——对象和线程的身份是统一的，在某些需要为线程附加状态的场景中比较自然。</li>
+    </ul>
+
+    <h3>继承 Thread 的缺点</h3>
+    <ul>
+      <li><strong>Java 的单继承限制</strong>——一个类只能继承一个父类。如果你的类已经继承了其他类（例如 <code>extends Animal</code>），就无法再继承 <code>Thread</code>。</li>
+      <li><strong>任务和线程机制耦合</strong>——线程本身是"执行任务的载体"，而任务是"要执行的内容"。将两者绑定在同一个类中违反了关注点分离（Separation of Concerns）原则。</li>
+      <li><strong>不易共享任务</strong>——你无法将同一个 <code>MyThread</code> 的任务逻辑交给线程池去管理（因为每个 <code>MyThread</code> 的实例只能启动一次）。</li>
+      <li><strong>资源开销较大</strong>——每个线程对象都继承了 <code>Thread</code> 类的完整"重量级"结构，创建大量线程时开销显著。</li>
+    </ul>
+
+    <!-- ==================== 方式二：实现 Runnable ==================== -->
+
+    <h2>方式二：实现 Runnable 接口</h2>
+
+    <p>定义一个类实现 <code>Runnable</code> 接口，实现 <code>run()</code> 方法，然后将其实例传给 <code>Thread</code> 的构造器：</p>
+
+    <pre><code>// 方式二：实现 Runnable 接口
+class MyTask implements Runnable {
+    @Override
+    public void run() {
+        System.out.println("线程 " + Thread.currentThread().getName() + " 正在执行");
+        // 要执行的任务
+    }
+}
+
+// 使用
+MyTask task = new MyTask();
+Thread t1 = new Thread(task);
+t1.start();</code></pre>
+
+    <p>
+      注意一个细节：在 <code>Runnable</code> 的 <code>run()</code> 里访问当前线程需要通过
+      <code>Thread.currentThread()</code> 静态方法，而不是像继承 <code>Thread</code> 时那样直接调用。
+    </p>
+
+    <h3>实现 Runnable 的优点</h3>
+    <ul>
+      <li><strong>不受单继承限制</strong>——你的类可以自由地继承其他父类，同时实现多个接口。</li>
+      <li><strong>任务与线程分离</strong>——<code>Runnable</code> 只描述"要做什么"，<code>Thread</code> 负责"怎么执行"。这种分离使得代码更清晰、更符合面向对象设计原则。</li>
+      <li><strong>任务可被复用</strong>——同一个 <code>Runnable</code> 实例可以交给多个 <code>Thread</code>，也可以提交给线程池（<code>ExecutorService</code>），灵活度远高于继承 <code>Thread</code>。</li>
+      <li><strong>资源更轻量</strong>——<code>Runnable</code> 只是一个接口，任务对象不包含 <code>Thread</code> 的额外开销。</li>
+      <li><strong>适合线程池</strong>——Java 并发包（<code>java.util.concurrent</code>）中的线程池、<code>FutureTask</code>、<code>CompletableFuture</code> 等都接受 <code>Runnable</code>/<code>Callable</code>，不能直接使用 <code>Thread</code> 子类。</li>
+    </ul>
+
+    <h3>实现 Runnable 的缺点</h3>
+    <ul>
+      <li><strong>不能直接使用 Thread 的 API</strong>——必须通过 <code>Thread.currentThread()</code> 获取当前线程引用后才能调用线程方法，稍显繁琐。</li>
+      <li><strong>不能直接抛出受检异常</strong>——<code>Runnable.run()</code> 的签名没有 <code>throws</code> 子句，受检异常必须在内部 try-catch 处理。</li>
+      <li><strong>没有返回值</strong>——<code>Runnable</code> 的 <code>run()</code> 返回 <code>void</code>，如果需要返回值，需要使用 <code>Callable&lt;V&gt;</code>（它实质上是 <code>Runnable</code> 的增强版）。</li>
+    </ul>
+
+    <!-- ==================== 对比表 ==================== -->
+
+    <h2>核心对比一览</h2>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left; padding:8px 0;">比较维度</th>
+        <th style="text-align:left; padding:8px 0;">继承 Thread</th>
+        <th style="text-align:left; padding:8px 0;">实现 Runnable</th>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">继承关系</td>
+        <td style="padding:8px 0;">占用唯一的单继承名额</td>
+        <td style="padding:8px 0;">不占用，可自由继承其他类</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">设计模式</td>
+        <td style="padding:8px 0;">任务与线程耦合</td>
+        <td style="padding:8px 0;">任务与线程分离（关注点分离）</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">任务复用</td>
+        <td style="padding:8px 0;">一个线程实例只能启动一次</td>
+        <td style="padding:8px 0;">同一任务可被多个线程/线程池复用</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">访问线程 API</td>
+        <td style="padding:8px 0;">直接使用 <code>this.getName()</code> 等</td>
+        <td style="padding:8px 0;">需通过 <code>Thread.currentThread()</code></td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">线程池兼容</td>
+        <td style="padding:8px 0;">不兼容，需额外包装</td>
+        <td style="padding:8px 0;">原生兼容 <code>ExecutorService</code></td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">资源开销</td>
+        <td style="padding:8px 0;">较重（携带 Thread 全部结构）</td>
+        <td style="padding:8px 0;">较轻（仅一个接口实现）</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px 0;">适用场景</td>
+        <td style="padding:8px 0;">简单场景、教学演示</td>
+        <td style="padding:8px 0;">生产环境、线程池、复杂并发</td>
+      </tr>
+    </table>
+
+    <!-- ==================== 深入分析 ==================== -->
+
+    <h2>深入分析：为什么 Runnable 是更好的设计</h2>
+
+    <h3>1. 从面向对象设计角度看</h3>
+
+    <p>
+      继承 <code>Thread</code> 意味着你的类"是一个线程"（is-a Thread），但大多数情况下，你的业务对象本身"不是线程"——
+      它只是"有一些任务需要在线程中执行"。用继承来表达"我要开个线程跑一段逻辑"是被迫使用继承机制来实现组合逻辑，
+      这本质上是<strong>继承的误用</strong>。
+    </p>
+
+    <p>
+      实现 <code>Runnable</code> 则意味着你的类"是一个可执行的任务"（is-a Runnable），这更贴近真实语义。
+      然后你把任务交给线程去跑——这是典型的<strong>组合优于继承</strong>（Composition over Inheritance）的实践。
+    </p>
+
+    <h3>2. 从并发编程演进角度看</h3>
+
+    <p>
+      Java 从 1.0 开始就提供了 <code>Thread</code> 和 <code>Runnable</code>，但 Java 5 引入
+      <code>java.util.concurrent</code> 包后，<strong>直接操作 <code>Thread</code> 已经被视为一种初级做法</strong>。
+      现代 Java 并发编程的标准范式是：
+    </p>
+
+    <pre><code>// 现代 Java 并发编程的推荐写法
+ExecutorService executor = Executors.newFixedThreadPool(4);
+
+// 提交 Runnable 任务
+executor.submit(() -> {
+    System.out.println("任务在线程池中执行");
+});
+
+// 提交 Callable 任务，可以获取返回值
+Future&lt;String&gt; future = executor.submit(() -> {
+    Thread.sleep(1000);
+    return "任务完成";
+});
+
+String result = future.get();  // 阻塞等待结果
+executor.shutdown();</code></pre>
+
+    <p>
+      在这个范式中，<code>Thread</code> 只作为底层机制存在，<strong>我们操作的对象是 <code>Runnable</code>/<code>Callable</code>
+      和线程池，而不是裸线程</strong>。继承 <code>Thread</code> 的方式无法融入这套体系。
+    </p>
+
+    <h3>3. 从源码角度看——Thread 本身就实现了 Runnable</h3>
+
+    <p>翻开 JDK 源码，你会发现一个关键事实：</p>
+
+    <pre><code>public class Thread implements Runnable {
+    // ...
+    private Runnable target;  // 构造器中传入的 Runnable
+
+    @Override
+    public void run() {
+        if (target != null) {
+            target.run();  // 如果传入了 Runnable，就调用它的 run()
+        }
+        // 如果子类重写了 run()，则执行子类的版本（多态）
+    }
+}</code></pre>
+
+    <p>这就揭示了两种方式的本质区别：</p>
+    <ul>
+      <li><strong>继承 Thread 并重写 run()</strong>：你替换了 Thread 自身的 <code>run()</code> 实现（多态覆盖）。</li>
+      <li><strong>实现 Runnable 并传给 Thread</strong>：你提供了一个 <code>target</code>，Thread 的 <code>run()</code> 在内部委托给这个 target（<strong>策略模式</strong>）。</li>
+    </ul>
+
+    <p>
+      Thread 的源码设计者已经为你选择了<strong>策略模式</strong>——把"要执行的任务"作为参数注入。
+      继承 <code>Thread</code> 反而是绕过了这个设计，直接用多态覆盖了策略分发逻辑。
+    </p>
+
+    <!-- ==================== 匿名内部类 & Lambda ==================== -->
+
+    <h2>实际编程中的简化写法</h2>
+
+    <p>在实际开发中，很少有人为每个线程任务定义一个独立的类。更常见的做法是使用匿名内部类或 Lambda 表达式：</p>
+
+    <h3>匿名内部类方式（Java 7 及之前）</h3>
+
+    <pre><code>// 使用 Runnable 的匿名内部类
+new Thread(new Runnable() {
+    @Override
+    public void run() {
+        System.out.println("匿名内部类线程");
+    }
+}).start();</code></pre>
+
+    <h3>Lambda 表达式方式（Java 8+，推荐）</h3>
+
+    <pre><code>// Runnable 是函数式接口，可以用 Lambda
+new Thread(() -> {
+    System.out.println("Lambda 线程");
+}).start();
+
+// 或者更简洁的单行版本
+new Thread(() -> System.out.println("Hello from thread")).start();</code></pre>
+
+    <p>
+      这也是 <code>Runnable</code> 方式的一个隐性优势——因为 <code>Runnable</code> 是<strong>函数式接口</strong>
+      （只有一个抽象方法的接口），所以可以直接用 Lambda 表达式，代码简洁度远超继承 <code>Thread</code>。
+    </p>
+
+    <!-- ==================== 资源共享问题 ==================== -->
+
+    <h2>需要注意的共同问题：资源共享与线程安全</h2>
+
+    <p>
+      无论使用哪种方式创建线程，<strong>多线程环境下的资源共享问题都是一样的</strong>。如果一个
+      <code>Runnable</code> 实例被多个线程共享，它的成员变量就是这些线程的共享数据：
+    </p>
+
+    <pre><code>class Counter implements Runnable {
+    private int count = 0;  // 多个线程共享这个变量！
+
+    @Override
+    public void run() {
+        for (int i = 0; i < 1000; i++) {
+            count++;  // 非原子操作，会出现竞态条件
+        }
+    }
+}
+
+Counter counter = new Counter();
+Thread t1 = new Thread(counter);
+Thread t2 = new Thread(counter);  // 两个线程共享同一个 counter
+t1.start();
+t2.start();
+
+t1.join();
+t2.join();
+System.out.println(counter.getCount());  // 很可能不是 2000！</code></pre>
+
+    <p>
+      解决方法：使用 <code>synchronized</code>、<code>AtomicInteger</code> 或其他并发工具类来保证线程安全。
+      但这不是本文的重点——这里的重点是<strong>继承 Thread 同样存在此问题</strong>，两种方式在"线程安全性"上没有任何区别。
+    </p>
+
+    <!-- ==================== 总结 ==================== -->
+
+    <h2>小结</h2>
+
+    <p>
+      继承 <code>Thread</code> 和实现 <code>Runnable</code> 都能创建线程，但在工程实践中，<strong>实现 <code>Runnable</code>
+      是更推荐的方式</strong>，原因归纳如下：
+    </p>
+
+    <ul>
+      <li><strong>设计层面</strong>：Runnable 将任务和线程解耦，遵循"组合优于继承"原则，并利用了策略模式。</li>
+      <li><strong>语言层面</strong>：Java 单继承意味着继承 Thread 会浪费唯一的继承名额。</li>
+      <li><strong>复用层面</strong>：Runnable 可以被多个线程共享、提交给线程池、包装为 FutureTask 等。</li>
+      <li><strong>演进层面</strong>：Java 5 之后的并发 API 全部围绕 Runnable/Callable 设计，继承 Thread 无法融入这套生态。</li>
+      <li><strong>语法层面</strong>：Runnable 作为函数式接口支持 Lambda 表达式，代码更简洁。</li>
+    </ul>
+
+    <p>
+      继承 <code>Thread</code> 并非全无价值——在极简单的场景、快速验证想法、或者确实需要扩展 Thread 类本身的行为
+      （例如自定义线程的创建/销毁逻辑）时，它仍然是合法选项。但一旦你的代码从"实验"进入"工程"，就应该切换到
+      <code>Runnable</code> + 线程池的范式。
+    </p>
+
+    <p>
+      一句话总结：<strong>把任务（Runnable）和执行的载体（Thread）分开，是 Java 并发编程的第一条设计原则。</strong>
+    </p>
+
+    <a href="index.html" class="back">&larr; 返回首页</a>
+  </article>
+</main>
+
+<footer>
+  用纸笔写代码，用耐心学 Java
+</footer>
+
+</body>
+</html>
